@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DIFFICULTY, buildSequence, mulberry32, timing, tunePool } from './melody';
+import { DIFFICULTY, buildSequence, mulberry32, timing, tuneFits, tunePool } from './melody';
 import { GAME_SECONDS, Game } from './game';
 import { PIANO_RANGE, TONICS, type ClefMode, type Difficulty, type Key } from './theory';
 import { TUNES, parseTune } from './tunes';
@@ -108,6 +108,37 @@ describe('sequence building', () => {
     const slow = timing('easy', 0.6);
     expect(slow.bps).toBeLessThan(DIFFICULTY.easy.bps);
     expect(slow.visibleSeconds).toBeGreaterThan(DIFFICULTY.easy.visibleSeconds);
+  });
+
+  it('plays a forced debug tune, or says clearly that it does not fit', () => {
+    const tonic = TONICS.major[0];
+    const key: Key = { tonic, mode: 'major' };
+    let played = 0;
+    let rejected = 0;
+    for (const tune of TUNES) {
+      for (const clef of clefs) {
+        for (const difficulty of levels) {
+          try {
+            const seq = buildSequence({ key, clef, difficulty, tuneId: tune.id }, mulberry32(3));
+            expect(seq.titles).toEqual([tune.title]);
+            expect(seq.pace).toBe(tune.pace ?? 1);
+            played++;
+          } catch (err) {
+            expect((err as Error).message).toMatch(/does not fit/);
+            expect(tuneFits(tune, key, clef)).toBe(false);
+            rejected++;
+          }
+        }
+      }
+    }
+    expect(played).toBeGreaterThan(0);
+    expect(() => buildSequence({ key, clef: 'treble', difficulty: 'easy', tuneId: 'nope' }, mulberry32(1))).toThrow(/Unknown tune/);
+    // Ode to Joy fits treble in every major key, so forcing it must never throw.
+    for (const t of TONICS.major) {
+      const seq = buildSequence({ key: { tonic: t, mode: 'major' }, clef: 'treble', difficulty: 'hard', tuneId: 'ode-to-joy' }, mulberry32(9));
+      expect(seq.titles[0]).toBe('Ode to Joy');
+    }
+    console.log(`forced tunes: ${played} played, ${rejected} rejected (C major)`);
   });
 
   it('includes Chopin at every difficulty', () => {

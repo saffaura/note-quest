@@ -19,6 +19,17 @@
     <main id="app">
       <!-- HOME / SETUP -->
       <section id="home" class="screen">
+        <div id="debug" class="debug hidden">
+          <button id="debug-btn" class="debug-btn" type="button" aria-expanded="false" aria-controls="debug-panel">
+            Debug
+          </button>
+          <div id="debug-panel" class="debug-panel hidden">
+            <label for="debug-tune">Song</label>
+            <select id="debug-tune"></select>
+            <p id="debug-info" class="debug-info" aria-live="polite"></p>
+          </div>
+        </div>
+
         <div class="best-pill" aria-live="polite">Best<b id="best">—</b></div>
 
         <div class="key-panel">

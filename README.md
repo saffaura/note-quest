@@ -34,6 +34,15 @@ The score never drops below 0. The current note is always the leftmost unplayed 
 - `src/renderer.ts` – canvas drawing of the staff
 - `src/piano.ts`, `src/audio.ts`, `src/main.ts` – input, sound and UI
 
+## Testing songs (debug picker)
+
+Open the game with `?debug` on the end of the URL (for example
+`https://saffaura.github.io/note-quest/?debug`), or run `npm run dev`, and a small **Debug** button
+appears in the top-left of the main menu. It opens a list of every tune; pick one and every game
+plays that song until you choose "Random" again. The panel shows the song's difficulty, length,
+source bars, and whether it fits the key and clef you've chosen. If it doesn't fit, Start is
+blocked with a message instead of falling back to another song. Normal players never see it.
+
 ## Adding a tune from a MusicXML score
 
 Put the `.mxl` / `.musicxml` file in `scores/` and run the converter (needs `pip install music21`):

@@ -201,6 +201,83 @@ button:focus-visible,
   place-items: center;
 }
 
+/* Debug song picker (only rendered with ?debug or on the dev server). */
+.debug {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 5;
+  max-width: min(22rem, 92vw);
+}
+
+.debug-btn {
+  max-width: 100%;
+  padding: 0.35rem 0.9rem;
+  background: var(--glass);
+  border-radius: 999px;
+  font-size: max(0.85rem, 13px);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.debug-btn.active {
+  background: rgba(152, 206, 251, 0.18);
+  color: var(--accent-hi);
+}
+
+.debug-panel {
+  margin-top: 0.4rem;
+  padding: 0.8rem 0.9rem 0.9rem;
+  background: #1b1426;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 0.9rem;
+  box-shadow: 0 1rem 2.4rem rgba(0, 0, 0, 0.55);
+  color: var(--text);
+}
+
+.debug-panel label {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: max(0.8rem, 12px);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.debug-panel select {
+  width: 100%;
+  padding: 0.5rem 0.6rem;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.6rem;
+  color: var(--text);
+  font: inherit;
+  font-size: max(0.95rem, 14px);
+}
+
+.debug-panel select option,
+.debug-panel select optgroup {
+  background: #1b1426;
+  color: var(--text);
+}
+
+.debug-info {
+  margin: 0.6rem 0 0;
+  font-size: max(0.85rem, 13px);
+  line-height: 1.4;
+  white-space: pre-line;
+  color: var(--muted);
+}
+
+.debug-info.bad {
+  color: #ff9fb3;
+}
+
 .key-wheel {
   width: min(calc(100dvh - 6rem), 38vw, 26rem);
   aspect-ratio: 1;

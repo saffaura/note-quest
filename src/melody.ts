@@ -62,6 +62,8 @@ export interface MelodySettings {
   key: Key;
   clef: ClefMode;
   difficulty: Difficulty;
+  /** Debug: play this library tune instead of picking one at random. */
+  tuneId?: string;
 }
 
 function shuffle<T>(items: T[], rng: Rng): T[] {
@@ -226,33 +228,53 @@ export function beatsNeeded(difficulty: Difficulty, pace = 1): number {
   return (GAME_SECONDS + visibleSeconds * (1 - LEAD_FRACTION)) * bps;
 }
 
+/** True when a tune can be placed on the keyboard in this key and clef (ignoring random extras). */
+export function tuneFits(tune: Tune, key: Key, clef: ClefMode): boolean {
+  return placeEvents(parseTune(tune.score), key, clef, mulberry32(1)) !== null;
+}
+
 /**
  * Build one song for a game: a random tune from the library, transposed to the chosen key and
  * clef. If the tune is shorter than a game it is played again (with fresh doubles and beams)
- * until the music lasts the full 60 seconds.
+ * until the music lasts the full 60 seconds. With `settings.tuneId` that exact tune is used, and
+ * an error is thrown if it cannot fit the chosen key and clef.
  */
 export function buildSequence(settings: MelodySettings, rng: Rng, minBeats?: number): Sequence {
-  const { key, clef, difficulty } = settings;
+  const { key, clef, difficulty, tuneId } = settings;
   const cfg = DIFFICULTY[difficulty];
 
   let title = '';
   let pace = 1;
   let source: TuneEvent[] = [];
   let first: PlacedEvent[] | null = null;
-  for (const tune of shuffle(tunePool(difficulty, key.mode), rng)) {
+  if (tuneId) {
+    const tune = TUNES.find((t) => t.id === tuneId);
+    if (!tune) throw new Error(`Unknown tune "${tuneId}"`);
     source = parseTune(tune.score);
-    first = placeEvents(inject(source, cfg, rng), key, clef, rng);
-    if (first) {
-      title = tune.title;
-      pace = tune.pace ?? 1;
-      break;
+    // Random doubles can push a tune out of range, so retry; fall back to the plain melody.
+    for (let attempt = 0; attempt < 30 && !first; attempt++) {
+      first = placeEvents(inject(source, cfg, rng), key, clef, rng);
     }
-  }
-  // No library tune fits this key and clef: fall back to a generated one.
-  while (!first) {
-    title = 'Surprise tune';
-    source = generateTune(difficulty, rng);
-    first = placeEvents(inject(source, cfg, rng), key, clef, rng);
+    first ??= placeEvents(source, key, clef, rng);
+    if (!first) throw new Error(`"${tune.title}" does not fit this key on the ${clef} staff. Try another key or clef.`);
+    title = tune.title;
+    pace = tune.pace ?? 1;
+  } else {
+    for (const tune of shuffle(tunePool(difficulty, key.mode), rng)) {
+      source = parseTune(tune.score);
+      first = placeEvents(inject(source, cfg, rng), key, clef, rng);
+      if (first) {
+        title = tune.title;
+        pace = tune.pace ?? 1;
+        break;
+      }
+    }
+    // No library tune fits this key and clef: fall back to a generated one.
+    while (!first) {
+      title = 'Surprise tune';
+      source = generateTune(difficulty, rng);
+      first = placeEvents(inject(source, cfg, rng), key, clef, rng);
+    }
   }
 
   const needed = minBeats ?? beatsNeeded(difficulty, pace);

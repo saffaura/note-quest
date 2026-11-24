@@ -6,9 +6,10 @@ import './style.css';
 
 import { Audio } from './audio';
 import { GAME_SECONDS, Game, type GameFx } from './game';
-import { buildSequence, mulberry32, randomSeed, timing } from './melody';
+import { buildSequence, mulberry32, randomSeed, timing, tuneFits } from './melody';
 import { Piano } from './piano';
 import { Renderer } from './renderer';
+import { TUNES, parseTune } from './tunes';
 import {
   type ClefMode,
   type Difficulty,
@@ -17,6 +18,7 @@ import {
   PIANO_RANGE,
   TONICS,
   type Tonic,
+  keyLabel,
   parseTonic,
   tonicName,
 } from './theory';
@@ -32,6 +34,10 @@ interface Settings {
 
 const STORAGE_SETTINGS = 'notequest.settings.v1';
 const STORAGE_BEST = 'notequest.best.v1';
+const STORAGE_DEBUG = 'notequest.debug.tune';
+
+// The debug song picker shows on the dev server, or on any page opened with ?debug in the URL.
+const DEBUG = import.meta.env.DEV || new URLSearchParams(location.search).has('debug');
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
@@ -205,6 +211,7 @@ function refreshHome(): void {
   $<HTMLInputElement>('opt-hints').checked = settings.hints;
   const best = readBest()[bestKey()];
   $('best').textContent = best === undefined ? '—' : String(best);
+  refreshDebug();
 }
 
 document.querySelectorAll<HTMLElement>('#clef-seg button').forEach((b) =>
@@ -226,6 +233,84 @@ $<HTMLInputElement>('opt-hints').addEventListener('change', (e) => {
   saveSettings();
   refreshHome();
 });
+
+/* ------------------------------ debug song picker ------------------------------ */
+
+let debugTuneId = '';
+if (DEBUG) {
+  try {
+    const saved = localStorage.getItem(STORAGE_DEBUG) ?? '';
+    if (TUNES.some((t) => t.id === saved)) debugTuneId = saved;
+  } catch {
+    /* storage unavailable: start on random */
+  }
+}
+
+function setupDebug(): void {
+  if (!DEBUG) return;
+  $('debug').classList.remove('hidden');
+  const select = $<HTMLSelectElement>('debug-tune');
+  select.add(new Option('Random (normal game)', ''));
+  for (const level of ['easy', 'medium', 'hard'] as const) {
+    const group = document.createElement('optgroup');
+    group.label = level[0].toUpperCase() + level.slice(1);
+    for (const t of TUNES.filter((x) => x.level === level)) {
+      group.appendChild(new Option(`${t.title} (${t.composer})`, t.id));
+    }
+    select.add(group);
+  }
+  select.value = debugTuneId;
+  select.addEventListener('change', () => {
+    debugTuneId = select.value;
+    try {
+      localStorage.setItem(STORAGE_DEBUG, debugTuneId);
+    } catch {
+      /* ignore */
+    }
+    refreshDebug();
+  });
+  $('debug-btn').addEventListener('click', () => toggleDebugPanel());
+  document.addEventListener('pointerdown', (e) => {
+    if (!$('debug').contains(e.target as Node)) toggleDebugPanel(false);
+  });
+}
+
+function toggleDebugPanel(open?: boolean): void {
+  const panel = $('debug-panel');
+  const show = open ?? panel.classList.contains('hidden');
+  panel.classList.toggle('hidden', !show);
+  $('debug-btn').setAttribute('aria-expanded', String(show));
+}
+
+function refreshDebug(): void {
+  if (!DEBUG) return;
+  const tune = TUNES.find((t) => t.id === debugTuneId);
+  $('debug-btn').textContent = tune ? `Debug: ${tune.title}` : 'Debug';
+  $('debug-btn').classList.toggle('active', !!tune);
+  const info = $('debug-info');
+  info.classList.remove('bad');
+  if (!tune) {
+    info.textContent = 'Each game picks a random song, as usual.';
+    return;
+  }
+  const beats = parseTune(tune.score).reduce((sum, e) => sum + e.dur, 0);
+  const fits = tuneFits(tune, currentKey(), settings.clef);
+  const facts = [`${tune.level}`, `written in ${tune.mode}`, `${beats} beats`];
+  if (tune.pace) facts.push(`pace ${tune.pace}`);
+  if (tune.draft) facts.push('draft');
+  const where = `${keyLabel(currentKey())}, ${settings.clef}`;
+  info.textContent =
+    `${facts.join(' · ')}\n` +
+    (fits ? `Fits ${where}.` : `Does NOT fit ${where}. Pick another key or clef.`) +
+    (tune.source ? `\nSource: ${tune.source}` : '');
+  info.classList.toggle('bad', !fits);
+}
+
+function showDebugError(message: string): void {
+  $('debug-info').textContent = message;
+  $('debug-info').classList.add('bad');
+  toggleDebugPanel(true);
+}
 
 async function goFullscreen(): Promise<void> {
   try {
@@ -250,10 +335,17 @@ function startGame(): void {
   clearCountdown();
   if (window.matchMedia('(pointer: coarse)').matches) void goFullscreen();
 
-  const sequence = buildSequence(
-    { key: currentKey(), clef: settings.clef, difficulty: settings.difficulty },
-    mulberry32(randomSeed()),
-  );
+  let sequence: ReturnType<typeof buildSequence>;
+  try {
+    sequence = buildSequence(
+      { key: currentKey(), clef: settings.clef, difficulty: settings.difficulty, tuneId: debugTuneId || undefined },
+      mulberry32(randomSeed()),
+    );
+  } catch (err) {
+    // Only a forced debug song can fail to fit; say why instead of starting a game.
+    showDebugError(err instanceof Error ? err.message : String(err));
+    return;
+  }
   const pacing = timing(settings.difficulty, sequence.pace);
   game = new Game(sequence, pacing);
   running = false;
@@ -450,6 +542,7 @@ window.addEventListener('resize', () => renderer.resize());
 /* ------------------------------ boot ------------------------------ */
 
 buildWheel();
+setupDebug();
 refreshHome();
 show('home');
 if (import.meta.env.DEV) {
