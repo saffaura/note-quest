@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#14101c" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <title>Note Quest – learn to read sheet music</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2314101c'/%3E%3Ctext x='32' y='48' font-size='44' text-anchor='middle' fill='%2398cefb' font-family='sans-serif'%3E%E2%99%AA%3C/text%3E%3C/svg%3E"
+    />
+  </head>
+  <body>
+    <main id="app">
+      <!-- HOME / SETUP -->
+      <section id="home" class="screen">
+        <div class="best-pill" aria-live="polite">Best<b id="best">—</b></div>
+
+        <div class="key-panel">
+          <svg id="key-wheel" class="key-wheel" viewBox="0 0 200 200" role="group" aria-label="Choose your key">
+            <circle cx="100" cy="100" r="99" class="wheel-base" />
+            <g id="wheel-wedges"></g>
+            <g id="wheel-center" class="wheel-center-g" role="button" tabindex="0">
+              <circle cx="100" cy="100" r="49" class="wheel-center" />
+              <text id="wheel-tonic" class="wheel-tonic" x="100" y="97" aria-hidden="true"></text>
+              <text id="wheel-mode" class="wheel-mode" x="100" y="112" aria-hidden="true"></text>
+              <text id="wheel-hint" class="wheel-hint" x="100" y="126" aria-hidden="true"></text>
+            </g>
+          </svg>
+        </div>
+
+        <div class="controls">
+          <div class="brand">
+            <h1>Note Quest</h1>
+            <p class="tagline">Read the notes, tap the keys!</p>
+          </div>
+
+          <div class="row">
+            <span class="row-label" id="clef-label">Clef</span>
+            <div class="seg seg-clef" id="clef-seg" role="group" aria-labelledby="clef-label">
+              <button data-clef="treble"><span class="clef-glyph">𝄞</span>Treble</button>
+              <button data-clef="bass"><span class="clef-glyph">𝄢</span>Bass</button>
+              <button data-clef="both"><span class="clef-glyph">𝄞𝄢</span>Both</button>
+            </div>
+          </div>
+
+          <div class="row">
+            <span class="row-label" id="diff-label">Speed</span>
+            <div class="seg seg-diff" id="diff-seg" role="group" aria-labelledby="diff-label">
+              <button data-diff="easy">Easy</button>
+              <button data-diff="medium">Medium</button>
+              <button data-diff="hard">Hard</button>
+            </div>
+          </div>
+
+          <div class="row">
+            <span class="row-label">Hints</span>
+            <label class="toggle"><input type="checkbox" id="opt-hints" /><span class="switch"></span>Show note names</label>
+          </div>
+
+          <div class="play-row">
+            <button id="play" class="btn btn-play">
+              <svg class="play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l13-7.5z" /></svg>
+              Start
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- GAME -->
+      <section id="game" class="screen hidden">
+        <header class="hud">
+          <button id="pause-btn" class="btn btn-icon" aria-label="Pause">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6v12M15 6v12" /></svg>
+          </button>
+          <div class="pill score-pill"><span class="pill-label">Score</span><b id="score">0</b></div>
+          <div class="timer" aria-label="Time left">
+            <div class="timer-track"><div class="timer-fill" id="timer-fill"></div></div>
+            <span id="timer-text">60</span>
+          </div>
+          <div class="pill streak-pill" id="streak-pill"><span class="pill-label">Streak</span><b id="streak">0</b></div>
+          <button id="hint-btn" class="btn btn-icon" aria-label="Toggle note names" aria-pressed="false">ABC</button>
+          <button id="sound-btn" class="btn btn-icon" aria-label="Toggle sound" aria-pressed="true">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z" />
+              <path class="sound-waves" d="M15.5 9.2a4 4 0 0 1 0 5.6M18 7a7.5 7.5 0 0 1 0 10" />
+              <path class="sound-slash" d="M16 9.5l5 5M21 9.5l-5 5" />
+            </svg>
+          </button>
+        </header>
+        <div class="stage">
+          <canvas id="staff"></canvas>
+          <div class="tune-title" id="tune-title"></div>
+        </div>
+        <div class="piano" id="piano" aria-label="Piano keys"></div>
+      </section>
+
+      <!-- RESULTS -->
+      <section id="results" class="screen hidden">
+        <div class="results-card">
+          <div class="stars" id="stars" aria-hidden="true"></div>
+          <h2 id="results-title">Great job!</h2>
+          <div class="big-score"><span id="res-score">0</span><small>points</small></div>
+          <p id="new-best" class="new-best hidden">New personal best</p>
+          <ul class="stats">
+            <li><b id="res-exact">0</b><span>perfect keys</span></li>
+            <li><b id="res-octave">0</b><span>right note, wrong octave</span></li>
+            <li><b id="res-miss">0</b><span>missed</span></li>
+            <li><b id="res-streak">0</b><span>best streak</span></li>
+          </ul>
+          <div class="results-actions">
+            <button id="again" class="btn btn-play">Play again</button>
+            <button id="to-home" class="btn">Change settings</button>
+          </div>
+        </div>
+      </section>
+
+      <div id="countdown" class="overlay hidden" aria-live="assertive"><span id="countdown-num">3</span></div>
+      <div id="pause" class="overlay hidden">
+        <div class="pause-card" role="dialog" aria-label="Game paused">
+          <h2>Paused</h2>
+          <p class="pause-stats">
+            <span>Score <b id="pause-score">0</b></span>
+            <span>Time left <b id="pause-time">60s</b></span>
+          </p>
+          <div class="pause-actions">
+            <button id="resume" class="btn btn-play">Resume</button>
+            <button id="quit" class="btn">Quit</button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <div id="rotate" class="rotate" role="alert">
+      <div class="rotate-phone">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2.2" /><path d="M11 18.5h2" /></svg>
+      </div>
+      <h2>Please turn your device sideways</h2>
+      <p>Note Quest plays in landscape mode.</p>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
