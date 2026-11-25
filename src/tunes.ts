@@ -336,13 +336,12 @@ export const TUNES: Tune[] = [
     composer: 'Beethoven',
     mode: 'major',
     level: 'medium',
-    source: 'Mutopia Project, Beethoven Op. 13 second movement (public domain), the theme and its returns (bars 1-8, 29-40, 45-64)',
-    score: `3 2 5:1.5 4:.5 3:.5 5:.5 1':.5 2':.5 5:1.5 b6:.5 6 2 5 b2 4:2 2
-            3:.5 1:.5 2 5:1.5 4:.5 3:.5 5:.5 1':.5 2':.5 5:1.5 b6:.5 6 2 5 b2 4:2 2 1:.5 5:.5
-            1':.5 b3':.5 2':.5 1':.5 7:.5 4':1.5 1':.5 b3':.5 2':.5 1':.5 1':.5 7:.5
-            b6:.5 1':.5 b7:.5 b6:.5 5:.5 b2':1.5 b6:.5 1':.5 b6:.5 5:.5 #4:1.5 #4:.5 #4:1.5 #4:.5 4:1.5 4:.5 3 2 5:1.5 4:.5
-            3:.5 5:.5 1':.5 2':.5 5:1.5 b6:.5 6 2 5 b2 4:2 2:2 3' 2' 5':1.5 4':.5
-            3:.5 5:.5 1':.5 2':.5 5:1.5 b6:.5 6 2 5 b2`,
+    alsoLevels: ['hard'],
+    source: 'MusicXML score (beethoven-pathetique-2.mxl), the high statement of the theme (bars 9-16) and the episode of bars 37-41 (the low statement, the tremolo sections and the climb to C6 are skipped to keep it in range), every note one beat, bass as written',
+    score: `3 2 | 5 4 | 3 5 1' 2' | 5 #5 | 6 2 | 5 #1 | 4 3 2 1 7, | 2 1 |
+            1 b3 2 1 | 7, 4 | 1 b3 2 1 | 1 7, | 1 b3 2 1`,
+    bass: `1 - | 3 - | 1 - - - | 5 - | 4 - | 3 - | 2 - - - - | 1 - |
+           1 - - - | 2 - | 1 - - - | 5 - | 1 - - -`,
   },
   {
     id: 'beethoven-les-adieux',
@@ -375,7 +374,7 @@ export const TUNES: Tune[] = [
     title: 'Nocturne in F minor (Op. 55 No. 1)',
     composer: 'Chopin',
     mode: 'minor',
-    level: 'easy',
+    level: 'medium',
     source: 'MusicXML score (chopin-nocturne-op55-1.mxl), melody bars 1-2, 5-8 and 17-24; ornaments and the left-hand-register run in bars 17 and 19 kept, rhythm evened out',
     score: `5 1' 7 6 | 5 b5 5 6 5:2 | 5 1' 7 6 | 5:2 4 5 6 | 3:2 3 2 1 | 1:2 5 5 |
             4 #6, 7, 1 7, 3 4 | 5:2 5 5 | #6 #1 2 3 2 5 #6 | #7:2 1' 7 6 |

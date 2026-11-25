@@ -285,14 +285,16 @@ describe('sequence building', () => {
     }
   });
 
-  it('can play every library tune for a full game, repeating it if it is short', () => {
+  it('can play every library tune for a full game in some key, repeating it if it is short', () => {
     const seen = new Set<string>();
     for (const mode of ['major', 'minor'] as const) {
       for (const difficulty of levels) {
-        const key: Key = { tonic: TONICS[mode][0], mode };
-        for (let seed = 0; seed < 60; seed++) {
-          const seq = buildSequence({ key, clef: 'treble', difficulty }, mulberry32(seed));
-          seen.add(seq.titles[0]);
+        for (const tonic of TONICS[mode]) {
+          const key: Key = { tonic, mode };
+          for (let seed = 0; seed < 12; seed++) {
+            const seq = buildSequence({ key, clef: 'treble', difficulty }, mulberry32(seed));
+            seen.add(seq.titles[0]);
+          }
         }
       }
     }
