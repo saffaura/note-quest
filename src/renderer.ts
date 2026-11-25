@@ -132,14 +132,14 @@ export class Renderer {
     };
   }
 
-  /** Screen x of an event's note column at the given game time. */
+  /** Screen x of an event's note column at the given song time. */
   xOf(event: RuntimeEvent, time: number): number {
     return this.layout.hitX + (event.t - time) * this.layout.pxPerSecond;
   }
 
   addFx(fx: GameFx, game: Game, now: number): void {
     const { space, yOf } = this.layout;
-    const x = this.xOf(fx.event, game.time);
+    const x = this.xOf(fx.event, game.songTime);
     if (fx.type === 'wrong') {
       this.shake.set(fx.event.ev.id, now);
       const y = yOf(fx.event.ev.notes[0].d) - space * 1.8;
@@ -380,8 +380,8 @@ export class Renderer {
     const current = game.current();
     const visible: { re: RuntimeEvent; x: number }[] = [];
     for (const re of game.events) {
-      if (re.t < game.time - 1) continue;
-      let x = this.xOf(re, game.time);
+      if (re.t < game.songTime - 1) continue;
+      let x = this.xOf(re, game.songTime);
       if (x > width + space * 3) break;
       if (x < hitX - space) continue;
       const shakeStart = this.shake.get(re.ev.id);

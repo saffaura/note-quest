@@ -805,6 +805,50 @@ h1 {
   display: none;
 }
 
+/* Brief message when the song speeds up or slows down. */
+.tempo-toast {
+  position: absolute;
+  left: 50%;
+  top: 0.6rem;
+  transform: translateX(-50%);
+  padding: 0.25rem 0.9rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: #fff;
+  border-radius: 999px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.tempo-toast.up {
+  background: #1f9e7a;
+}
+
+.tempo-toast.down {
+  background: #7a6aa8;
+}
+
+.tempo-toast.show {
+  animation: tempo-toast 1.8s ease-out;
+}
+
+@keyframes tempo-toast {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -0.6rem);
+  }
+  12%,
+  75% {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, 0);
+  }
+}
+
 /* ---------- piano ---------- */
 .piano {
   position: relative;

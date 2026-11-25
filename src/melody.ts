@@ -1,4 +1,4 @@
-import { GAME_SECONDS, LEAD_FRACTION } from './game';
+import { GAME_SECONDS, LEAD_FRACTION, TEMPO_MAX } from './game';
 import {
   type ClefMode,
   type Difficulty,
@@ -268,10 +268,10 @@ export function timing(difficulty: Difficulty, pace = 1): { bps: number; visible
   return { bps: cfg.bps * pace, visibleSeconds: cfg.visibleSeconds / pace };
 }
 
-/** Beats of music needed to keep the staff full until the end of a game. */
+/** Beats of music needed to keep the staff full until the end of a game, even at the fastest tempo. */
 export function beatsNeeded(difficulty: Difficulty, pace = 1): number {
   const { bps, visibleSeconds } = timing(difficulty, pace);
-  return (GAME_SECONDS + visibleSeconds * (1 - LEAD_FRACTION)) * bps;
+  return (GAME_SECONDS * TEMPO_MAX + visibleSeconds * (1 - LEAD_FRACTION)) * bps;
 }
 
 /** True when a tune can be placed on the keyboard in this key and clef (ignoring random extras). */

@@ -354,6 +354,8 @@ function startGame(): void {
   }
   const pacing = timing(settings.difficulty, sequence.pace);
   game = new Game(sequence, pacing);
+  game.onTempo = showTempoToast;
+  $('tempo-toast').classList.remove('show');
   running = false;
   paused = false;
   $('pause').classList.add('hidden');
@@ -373,6 +375,14 @@ function startGame(): void {
   // The first frame after the screen is shown needs a real layout pass.
   requestAnimationFrame(() => renderer.resize());
   runCountdown();
+}
+
+function showTempoToast(direction: 'up' | 'down'): void {
+  const toast = $('tempo-toast');
+  toast.textContent = direction === 'up' ? 'Speeding up!' : 'Slowing down...';
+  toast.classList.remove('up', 'down', 'show');
+  void toast.offsetWidth;
+  toast.classList.add(direction, 'show');
 }
 
 function clearCountdown(): void {

@@ -34,6 +34,19 @@ After 10 correct notes in a row, every further correct note earns the +3 streak 
 note or a missed note breaks the streak (the staff glows while it is active). After two wrong
 presses in a row, the correct key flashes on the piano; playing it clears the note but scores no points.
 
+### Adaptive speed
+
+The song speed adapts to the player (shown briefly as "Speeding up!" / "Slowing down..."):
+
+- After 10 perfect notes in a row that were each played soon after they appeared (while still in the
+  right 60% of the staff), the song speeds up by 5%, and by another 5% for every 7 more such notes,
+  up to 130%. A wrong key, a right note in the wrong octave, a hinted note or a late note ends the run.
+- Every 5 wrong presses and missed notes in a row (with no correct note between them) slow the song
+  down by 10%, down to 70%.
+
+The 60 second timer always runs in real time; only the music speeds up or slows down. The constants
+are at the top of `src/game.ts`.
+
 ## Layout
 
 - `src/theory.ts` – scales, spelling, key signatures, staff geometry

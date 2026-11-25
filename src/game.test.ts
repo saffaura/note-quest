@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { GAME_SECONDS, Game, STREAK_BONUS_AT } from './game';
+import { GAME_SECONDS, Game, SPEEDUP_EVERY, STREAK_BONUS_AT, TEMPO_MAX, TEMPO_MIN } from './game';
 import type { GameEvent, Sequence } from './melody';
 import type { Pitch } from './theory';
 
@@ -204,6 +204,137 @@ describe('Wrong-note hints', () => {
     g.press(61);
     const next = g.press(62);
     expect(next?.type === 'wrong' && next.hint).toEqual([67]);
+  });
+});
+
+describe('Tempo', () => {
+  const run = (count: number) => Array.from({ length: count }, (_, i) => ev(i, i, 60 + (i % 5)));
+  /** Plays note `i` one second after the previous one, so each is hit just after it appears. */
+  const playPrompt = (g: Game, i: number) => {
+    g.update(1);
+    return g.press(60 + (i % 5));
+  };
+
+  it('starts at normal speed and the song clock follows real time', () => {
+    const g = make(run(3));
+    g.update(2);
+    expect(g.tempo).toBe(1);
+    expect(g.songTime).toBeCloseTo(2);
+  });
+
+  it('runs the song clock at the current tempo while the 60 s timer stays real', () => {
+    const g = make(run(3));
+    g.tempo = g.tempoTarget = 1.2;
+    g.update(1);
+    expect(g.time).toBeCloseTo(1);
+    expect(g.songTime).toBeCloseTo(1.2);
+  });
+
+  it('speeds up slightly after 10 perfect notes in a row played soon after they appear, then every 7 more', () => {
+    const g = make(run(30));
+    const changes: [string, number][] = [];
+    g.onTempo = (dir, target) => changes.push([dir, target]);
+    for (let i = 0; i < STREAK_BONUS_AT - 1; i++) playPrompt(g, i);
+    expect(g.tempoTarget).toBe(1);
+    playPrompt(g, STREAK_BONUS_AT - 1);
+    expect(g.tempoTarget).toBeCloseTo(1.05);
+    for (let i = STREAK_BONUS_AT; i < STREAK_BONUS_AT + SPEEDUP_EVERY - 1; i++) playPrompt(g, i);
+    expect(g.tempoTarget).toBeCloseTo(1.05);
+    playPrompt(g, STREAK_BONUS_AT + SPEEDUP_EVERY - 1);
+    expect(g.tempoTarget).toBeCloseTo(1.1);
+    expect(changes).toEqual([
+      ['up', 1.05],
+      ['up', 1.1],
+    ]);
+    g.update(3);
+    expect(g.tempo).toBeGreaterThan(1);
+    expect(g.tempo).toBeLessThanOrEqual(g.tempoTarget);
+  });
+
+  it('does not speed up when notes are played late, close to the vanish line', () => {
+    const g = make(run(30));
+    g.update(4); // the first note is already 40% of the way across when it is played
+    for (let i = 0; i < 20; i++) {
+      expect(g.press(60 + (i % 5))?.type).toBe('exact');
+      g.update(1);
+    }
+    expect(g.tempoTarget).toBe(1);
+  });
+
+  it('does not count the right note in another octave toward speeding up', () => {
+    const g = make(run(30));
+    for (let i = 0; i < 9; i++) playPrompt(g, i);
+    g.update(1);
+    g.press(72 + (9 % 5));
+    for (let i = 10; i < 19; i++) playPrompt(g, i);
+    expect(g.tempoTarget).toBe(1);
+  });
+
+  it('starts the run again after a wrong note', () => {
+    const g = make(run(30));
+    for (let i = 0; i < 9; i++) playPrompt(g, i);
+    g.update(1);
+    g.press(70);
+    g.press(60 + (9 % 5));
+    for (let i = 10; i < 18; i++) playPrompt(g, i);
+    expect(g.tempoTarget).toBe(1);
+    playPrompt(g, 18);
+    expect(g.tempoTarget).toBeCloseTo(1.05);
+  });
+
+  it('never goes above the maximum tempo', () => {
+    const g = make(run(60));
+    g.tempo = g.tempoTarget = 1.28;
+    for (let i = 0; i < 40; i++) {
+      g.update(0.2);
+      g.press(60 + (i % 5));
+    }
+    expect(g.tempoTarget).toBeLessThanOrEqual(TEMPO_MAX);
+  });
+
+  it('slows down after 5 wrong notes in a row', () => {
+    const g = make(run(5));
+    const changes: [string, number][] = [];
+    g.onTempo = (dir, target) => changes.push([dir, target]);
+    for (let i = 0; i < 4; i++) g.press(70);
+    expect(g.tempoTarget).toBe(1);
+    g.press(70);
+    expect(g.tempoTarget).toBeCloseTo(0.9);
+    expect(changes).toEqual([['down', 0.9]]);
+  });
+
+  it('slows down after 5 missed notes in a row', () => {
+    const g = make(run(5));
+    g.update(30);
+    expect(g.misses).toBe(5);
+    expect(g.tempoTarget).toBeCloseTo(0.9);
+  });
+
+  it('counts wrong notes and misses together, and a correct note starts the count again', () => {
+    const g = make(run(6));
+    for (let i = 0; i < 4; i++) g.press(70);
+    g.press(60); // shown after the hint: clears the note, neither fails nor helps
+    expect(g.press(61)?.type).toBe('exact');
+    for (let i = 0; i < 4; i++) g.press(70);
+    expect(g.tempoTarget).toBe(1);
+    g.update(30); // the rest are missed: 4 + 3 more in a row
+    expect(g.tempoTarget).toBeLessThan(1);
+  });
+
+  it('never goes below the minimum tempo', () => {
+    const g = make(run(40));
+    g.update(60);
+    expect(g.tempoTarget).toBeCloseTo(TEMPO_MIN);
+  });
+
+  it('moves the speed gradually rather than jumping', () => {
+    const g = make(run(5));
+    g.update(30);
+    const before = g.tempo;
+    expect(before).toBeGreaterThan(g.tempoTarget);
+    g.update(0.05);
+    expect(g.tempo).toBeLessThan(before);
+    expect(g.tempo).toBeGreaterThan(g.tempoTarget);
   });
 });
 
