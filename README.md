@@ -30,7 +30,7 @@ npm run build    # production build in dist/
 
 The score never drops below 0. The current note is always the leftmost unplayed one.
 
-After 5 correct notes in a row, every further correct note earns the +3 streak bonus until a wrong
+After 10 correct notes in a row, every further correct note earns the +3 streak bonus until a wrong
 note or a missed note breaks the streak (the staff glows while it is active). After two wrong
 presses in a row, the correct key flashes on the piano.
 

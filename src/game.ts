@@ -7,7 +7,7 @@ export const POINTS_EXACT = 5;
 export const POINTS_OCTAVE = 1;
 export const POINTS_WRONG = -2;
 /** Correct notes in a row after which every further correct note earns a bonus. */
-export const STREAK_BONUS_AT = 5;
+export const STREAK_BONUS_AT = 10;
 export const POINTS_STREAK_BONUS = 3;
 /** Wrong presses in a row after which the correct key is shown. */
 export const WRONG_BEFORE_HINT = 2;
