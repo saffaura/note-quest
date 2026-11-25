@@ -112,19 +112,6 @@ export const TUNES: Tune[] = [
            5 - - - - - | 6 - | 2 - - - - - - -`,
   },
   {
-    id: 'fur-elise',
-    meter: 3,
-    pickup: 1,
-    title: 'Für Elise',
-    composer: 'Beethoven',
-    mode: 'minor',
-    level: 'hard',
-    score: `5':.5 #4':.5 5':.5 #4':.5 5':.5 2':.5 4':.5 3':.5 1':1.5 3:.5 5:.5 1':.5 2':1.5 5:.5 #7:.5 2':.5 3':2 5':.5 #4':.5 5':.5 #4':.5 5':.5 2':.5 4':.5 3':.5 1':1.5 3:.5 5:.5 1':.5 2':2 3':.5 2':.5 1':2
-            1':1.5 2':.5 3':.5 4':.5 5':2 6':.5 5':.5 4':2 5':.5 4':.5 3':2 4':.5 3':.5 2':2 5':.5
-            5':.5 #4':.5 5':.5 #4':.5 5':.5 2':.5 4':.5 3':.5 1':1.5 3:.5 5:.5 1':.5 2':1.5 5:.5 #7:.5 2':.5 3':2 5':.5 #4':.5 5':.5 #4':.5 5':.5 2':.5 4':.5 3':.5 1':1.5 3:.5 5:.5 1':.5 2':2 3':.5 2':.5 1':2`,
-    source: 'Mutopia Project, Beethoven WoO 59 (public domain), bars 1-13 then the opening again',
-  },
-  {
     id: 'rondo-alla-turca',
     title: 'Turkish March',
     composer: 'Mozart',
@@ -143,9 +130,14 @@ export const TUNES: Tune[] = [
     composer: 'Chopin',
     mode: 'minor',
     level: 'easy',
-    source: 'Mutopia Project, Chopin Op. 28 No. 4 (public domain), bars 1-12 and 21-25',
-    score: `5':2 6' 5':2 6' 5':2 6' 5':2 #4' 4':2 5' 4':2 5' 4':2 5' 4':2 #3':2 4':.5 5':.5 7':.5 6':.5 1':.5 4':.5 2':2 4' 2':2 4' 3':.5 2':.5 6:.5 5:.5 #7:.5 2':.5
-            1':2 2' 1':2 2' 1':2 1':2 #7:2 1':2`,
+    alsoLevels: ['medium'],
+    source: 'MusicXML score (chopin-prelude-op28-4.mxl), the melody of bars 1-11, the restatement in bars 13-15 and the ending in bars 19-25, every note one beat (the climax and the runs of bars 12 and 16-18 are skipped), bass as written',
+    score: `5 6 | 5 6 | 5 6 | 5 b5 | 4 5 | 4 5 | 4 5 4 | 4 #3 | #3 4 5 7 6 1 4 | 2 4 | 2 4 |
+            5 6 | 5 6 | 5 6 |
+            2 4 | 2 2 1 | 1 2 | 1 2 | 1 | 1 #7, | 1`,
+    bass: `3 - | 2 - | b2 - | 1 - | 1 - | 1 - | 7 - - | 7 - | 6 - - - - - - | 5 - | 5 - |
+           3 - | 2 - | b2 - |
+           5 - | 5 - - | 6 - | 5 - | 6 | 5 - | 1`,
   },
   {
     id: 'chopin-prelude-7',
@@ -201,6 +193,90 @@ export const TUNES: Tune[] = [
     bass: `1 - - - | 4 - - - - - | 3 - - - | 2 - - | 4 - - | 2 - - | 4 - - - | 7 - - - - - |
            1 - - - | 4 - - - - - | 4 - - - | 4 - - - - | 4 - - | 2 - - | 4 - - - | 7 - - - - - |
            1 - - - | 4 - - - - - | 4 - - - | 4 - - - -`,
+  },
+  {
+    id: 'burgmuller-arabesque-100-2',
+    title: 'Arabesque (Op. 100 No. 2)',
+    composer: 'Burgmüller',
+    mode: 'minor',
+    level: 'medium',
+    alsoLevels: ['easy', 'hard'],
+    source: 'MusicXML score (burgmuller-op100no2-arabesque.mxl), right hand bars 3-5 and 7-19 (the runs to E6 in bar 6 are skipped to keep it in range), rests dropped, every note one beat, bass as written',
+    score: `1 2 3 2 1 | 1 2 3 4 5 | 4 5 6 7 1' | 5 5 6 | 4 4 | 4 7 4 5 | 3 5 | 3 3' |
+            5 2 | 3 1 | 5 2 | 3 1 | 1' 5 | 6 5 | 4 3 2 1 | #7, 5`,
+    bass: `1 - - - - | 1 - - - - | 4 - - - - | 3 - - | 7 - | 7 - - - | 3 - | 3 - |
+           5 - | 1 - | 5 - | 1 - | 1 - | 4 - | 5 - - - | 5 -`,
+  },
+  {
+    id: 'schumann-traumerei-15-7',
+    title: 'Träumerei (Op. 15 No. 7)',
+    composer: 'Schumann',
+    mode: 'major',
+    level: 'easy',
+    alsoLevels: ['medium'],
+    source: 'MusicXML score (schumann-reverie-op15-7.mxl), the opening C pickup and the right-hand top line of bars 1-4, 9-13 and 16 (the high A and B♭ of bars 6, 7 and 14 are skipped to keep it in range), every note one beat, bass as written',
+    score: `5, | 1 1 7, 1 3 | 5 1' 1' 7 6 | 5 1' 2 3 4 6 1 2 | 3 5 2 5, |
+            1 1 7, 1 3 | 5 b7 b7 6 5 | 4 6 2 3 4 3 | 2 6, 6, 1 |
+            4 4 3 4 6 | 6 3 3 2`,
+    bass: `- | 1 - - - - | 1 - - - - | 5 - - - - - - - | 1 - - - |
+           1 - - - - | 5 - - - - | 2 - - - - - | 6 - - - |
+           4 - - - - | 3 - - -`,
+  },
+  {
+    id: 'chopin-valse-b150',
+    title: 'Waltz in A minor (B. 150)',
+    composer: 'Chopin',
+    mode: 'minor',
+    level: 'medium',
+    alsoLevels: ['easy', 'hard'],
+    source: 'MusicXML score (chopin-valse-b150.mxl), the opening theme: the E pickup and bars 1-14 (bar 15 and later climb too high and are skipped), every note one beat, bass as written',
+    score: `5, | 1 2 3 3 | 4 5 6 | 2 3 4 1' 7 6 | 5 #4 5 |
+            1 2 3 3 | 4 5 6 | 2 3 4 1' 7 2 | 3 5, |
+            1 2 3 3 | 4 5 6 | 2 3 4 1' 7 6 | 5 #4 5 |
+            3 4 5 5 | 6 7 1'`,
+    bass: `- | 1 - - - | 4 - - | 7 - - - - - | 3 - - |
+           1 - - - | 4 - - | 7 - - - - - | 3 - |
+           1 - - - | 4 - - | 7 - - - - - | 3 - - |
+           1 - - - | 4 - -`,
+  },
+  {
+    id: 'bach-invention-8',
+    title: 'Invention No. 8 in F (BWV 779)',
+    composer: 'Bach',
+    mode: 'major',
+    level: 'hard',
+    source: 'MusicXML score (bach-invention-8.mxl), the right hand of bars 1-3 and 5-9 (the high run of bar 4 is skipped to keep it in range), every note one beat, bass as written',
+    score: `1 3 1 5 1 |
+            1' 7 6 5 6 5 4 3 4 3 2 |
+            1 3 5 3 1' 5 |
+            1' 3' 2' 3' 1' 3' 2' 3' 1' 3' 2' 3' |
+            6 1' 7 1' 6 1' 7 1' 6 1' 7 1' |
+            #4 2 6 #4 1' 6 |
+            2' 3' 2' 1' 7 1' 7 6 5 6 5 4 |
+            3 6 5 #4 5 #4 3 2 3 2 1`,
+    bass: `- - - - - |
+           1 - - - - - - - - - - |
+           1 - - - - - |
+           1 - - - - - - - - - - - |
+           6 - - - - - - - - - - - |
+           2 - - - - - |
+           5 - - - - - - - - - - - |
+           6 - - - - - - - - - -`,
+  },
+  {
+    id: 'mendelssohn-romance-19-1',
+    title: 'Romance (Op. 19 No. 1)',
+    composer: 'Mendelssohn',
+    mode: 'major',
+    level: 'medium',
+    alsoLevels: ['easy', 'hard'],
+    source: 'MusicXML score (mendelssohn-romance-op19-1.mxl), the melody (top voice) of the opening section, bars 2-16, every note one beat, bass as written',
+    score: `4 | 3 2 1 1' | 7 6 5 6 | 4 5 2 3 5 4 | 3 2 4 |
+            3 2 1 1' | 7 6 5 3' | 6 3' | 6 6 | 6 1' 7 6 3 |
+            5 #4 | 4 3 3 | #4 5 7 6 5 | 5 4 | 5 2 2`,
+    bass: `- | 1 - - - | 5 - - - | 2 - - - - - | 5 - - |
+           1 - - - | 5 - - - | 1 - | 1 - | 2 - - - - |
+           2 - | 2 - - | 6 - - - - | 5 - | 5 - -`,
   },
   {
     id: 'chopin-waltz-69-2',
@@ -279,19 +355,6 @@ export const TUNES: Tune[] = [
             3' 2' 1':1.5 b3':.5 b6':.5 5':.5 1'':.5
             b2':.5 2':.5 6:.5 1':2 3':2 2':.5
             5' 3':.5 2':.5 2':.5 1':.5 7:.5 6:.5 7:2 6:2`,
-  },
-  {
-    id: 'beethoven-appassionata',
-    title: 'Appassionata Sonata (Op. 57)',
-    composer: 'Beethoven',
-    mode: 'minor',
-    level: 'hard',
-    source: 'pianobit.app MIDI of Beethoven Op. 57 first movement, main theme (bars 3-4, 10-12, 20-22)',
-    score: `1:2 3:2 5:.5 1':2 1:2 5:2 #6 #6 #7 #6 #7 #6:.5 5:.5 #7:.5 #6:.5
-            5:2 #6 #6 #7 #6 #7 #6:.5 5:.5 #7:.5 #6:.5 5:2 #7:2 1' 1' 2' 1' 2' 1':.5 #7:.5 2':.5 1':.5
-            1:2 3:2 5:.5 1':2 1:2
-            5:2 #6 #6 #7 #6 #7 #6:.5 5:.5 #7:.5 #6:.5
-            1:2 3:2 5:.5 1':2 1:2 5:2 #6 #6 #7 #6 #7 #6:.5 5:.5 #7:.5 #6:.5`,
   },
 
   // From MusicXML scores in scores/, converted with tools/xml_to_tune.py.

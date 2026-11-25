@@ -284,6 +284,15 @@ export function buildSequence(settings: MelodySettings, rng: Rng, minBeats?: num
   const variant = (src: TuneEvent[]) =>
     inject(src, clef === 'both' && hasBass(src) ? { ...cfg, dyadChance: 0 } : cfg, rng);
 
+  // Random doubles can push a tune out of range, so retry a few times; fall back to the plain melody.
+  const placeWithExtras = (src: TuneEvent[]): PlacedEvent[] | null => {
+    for (let attempt = 0; attempt < 12; attempt++) {
+      const placed = placeEvents(variant(src), key, clef, rng);
+      if (placed) return placed;
+    }
+    return placeEvents(src, key, clef, rng);
+  };
+
   let title = '';
   let pace = 1;
   let source: TuneEvent[] = [];
@@ -292,18 +301,14 @@ export function buildSequence(settings: MelodySettings, rng: Rng, minBeats?: num
     const tune = TUNES.find((t) => t.id === tuneId);
     if (!tune) throw new Error(`Unknown tune "${tuneId}"`);
     source = tuneEvents(tune);
-    // Random doubles can push a tune out of range, so retry; fall back to the plain melody.
-    for (let attempt = 0; attempt < 30 && !first; attempt++) {
-      first = placeEvents(variant(source), key, clef, rng);
-    }
-    first ??= placeEvents(source, key, clef, rng);
+    first = placeWithExtras(source);
     if (!first) throw new Error(`"${tune.title}" does not fit this key on the ${clef} staff. Try another key or clef.`);
     title = tune.title;
     pace = tunePace(tune, difficulty);
   } else {
     for (const tune of shuffle(tunePool(difficulty, key.mode), rng)) {
       source = tuneEvents(tune);
-      first = placeEvents(variant(source), key, clef, rng);
+      first = placeWithExtras(source);
       if (first) {
         title = tune.title;
         pace = tunePace(tune, difficulty);

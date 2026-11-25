@@ -498,6 +498,8 @@ export class Renderer {
       }
       ctx.restore();
 
+      if (hints) this.drawNoteName(n, nx, y, open, color);
+
       if (re.ev.dur === 1.5) {
         ctx.fillStyle = color;
         ctx.beginPath();
@@ -530,11 +532,6 @@ export class Renderer {
         this.drawStem(s, color);
         if (re.ev.dur <= 0.5) this.drawFlag(s, color);
       });
-    }
-
-    if (hints) {
-      if (cross) stems.forEach((s, k) => this.drawHint([notes[k]], x, s));
-      else this.drawHint(notes, x, stem);
     }
     ctx.restore();
   }
@@ -626,28 +623,23 @@ export class Renderer {
     }
   }
 
-  private drawHint(notes: Pitch[], x: number, stem: StemInfo | null): void {
+  /** The note's letter name, written inside its notehead (light on filled heads, dark on open ones). */
+  private drawNoteName(note: Pitch, x: number, y: number, open: boolean, headColor: string): void {
     const { ctx } = this;
-    const { yOf, space } = this.layout;
-    const label = notes.map((n) => pitchName(n)).join(' + ');
-    const size = clamp(space * 0.72, 10, 17);
+    const { space } = this.layout;
+    const label = pitchName(note);
+    let size = Math.max(8, space * 0.68);
     ctx.font = `600 ${size}px ${UI_FONT}`;
+    const maxWidth = space * 1.15;
+    const width = ctx.measureText(label).width;
+    if (width > maxWidth) {
+      size *= maxWidth / width;
+      ctx.font = `600 ${size}px ${UI_FONT}`;
+    }
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    const textW = ctx.measureText(label).width;
-    const stemUp = stem?.dir !== -1;
-    const y = stemUp ? yOf(notes[0].d) + space * 1.3 : yOf(notes[notes.length - 1].d) - space * 1.3;
-    const padX = size * 0.45;
-    const h = size * 1.35;
-    ctx.fillStyle = 'rgba(251, 247, 238, 0.94)';
-    ctx.strokeStyle = 'rgba(42, 33, 49, 0.22)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.roundRect(x - textW / 2 - padX, y - h / 2, textW + padX * 2, h, h / 2);
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = INK;
-    ctx.fillText(label, x, y + 0.5);
+    ctx.fillStyle = open ? headColor : PAPER;
+    ctx.fillText(label, x, y + size * 0.04);
   }
 
   private drawParticles(dt: number): void {

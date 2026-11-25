@@ -22,8 +22,8 @@ describe('tune parser', () => {
 describe('tune pools', () => {
   it('only offers altered tunes in their own mode', () => {
     const majorHard = tunePool('hard', 'major').map((t) => t.id);
-    expect(majorHard).not.toContain('fur-elise');
-    expect(tunePool('hard', 'minor').map((t) => t.id)).toContain('fur-elise');
+    expect(majorHard).not.toContain('rondo-alla-turca');
+    expect(tunePool('hard', 'minor').map((t) => t.id)).toContain('rondo-alla-turca');
   });
   it('has enough tunes for every mode and level', () => {
     for (const mode of ['major', 'minor'] as const)
@@ -263,6 +263,19 @@ describe('sequence building', () => {
         seen.add(buildSequence({ key, clef: 'both', difficulty }, mulberry32(seed)).titles[0]);
       }
       expect(seen.has(melodie.title), difficulty).toBe(true);
+    }
+  });
+
+  it('offers Burgmuller Arabesque on easy, medium and hard in minor keys', () => {
+    const arabesque = TUNES.find((t) => t.id === 'burgmuller-arabesque-100-2')!;
+    for (const level of levels) expect(tunePool(level, 'minor').includes(arabesque), level).toBe(true);
+    const key: Key = { tonic: TONICS.minor[0], mode: 'minor' };
+    for (const difficulty of levels) {
+      const seen = new Set<string>();
+      for (let seed = 0; seed < 150; seed++) {
+        seen.add(buildSequence({ key, clef: 'both', difficulty }, mulberry32(seed)).titles[0]);
+      }
+      expect(seen.has(arabesque.title), difficulty).toBe(true);
     }
   });
 
