@@ -27,6 +27,10 @@ export interface Tune {
    * ignore it. Tunes without it get a simple generated bass (see harmony.ts).
    */
   bass?: string;
+  /** A fuller bass line used instead of `bass` on hard difficulty (same one-token-per-melody-token format). */
+  hardBass?: string;
+  /** A sparser bass line used instead of `bass` on easy difficulty (same one-token-per-melody-token format). */
+  easyBass?: string;
   /** Beats per bass note for the generated bass (a bar, usually). Default 4. */
   meter?: number;
   /** Beats of lead-in before the first full bar, so the generated bass starts on the downbeat. */
@@ -45,6 +49,10 @@ export interface Tune {
    * (below 1 = slower), for tunes that are fine for easy readers when they are slowed down.
    */
   easyPace?: number;
+  /** Extra slowdown on easy when the player chooses both clefs (for tunes that are busy with two hands). */
+  easyBothPace?: number;
+  /** Extra slowdown on medium when the player chooses both clefs, on top of the general Both-mode slowdown. */
+  mediumBothPace?: number;
   /** Extra difficulties to offer this tune on, besides `level`, at its normal speed there. */
   alsoLevels?: Difficulty[];
 }
@@ -83,8 +91,14 @@ export function parseTune(score: string, bass?: string): TuneEvent[] {
 }
 
 /** A tune's melody with its bass line: the hand-written one if there is one, else a generated one. */
-export function tuneEvents(tune: Tune): TuneEvent[] {
-  if (tune.bass !== undefined) return parseTune(tune.score, tune.bass);
+export function tuneEvents(tune: Tune, difficulty?: Difficulty): TuneEvent[] {
+  const bass =
+    difficulty === 'hard' && tune.hardBass !== undefined
+      ? tune.hardBass
+      : difficulty === 'easy' && tune.easyBass !== undefined
+        ? tune.easyBass
+        : tune.bass;
+  if (bass !== undefined) return parseTune(tune.score, bass);
   return autoBass(parseTune(tune.score), tune.mode, tune.meter ?? 4, tune.pickup ?? 0);
 }
 
@@ -245,7 +259,7 @@ export const TUNES: Tune[] = [
     composer: 'Bach',
     mode: 'major',
     level: 'hard',
-    source: 'MusicXML score (bach-invention-8.mxl), the right hand of bars 1-3 and 5-9 (the high run of bar 4 is skipped to keep it in range), every note one beat, bass as written',
+    source: 'MusicXML score (bach-invention-8.mxl), the right hand of bars 1-3 and 5-9 (the high run of bar 4 is skipped to keep it in range), every note one beat; the bass notes are the left hand of the same bars wherever it sounds with the melody on an eighth-note beat, folded into the bass staff',
     score: `1 3 1 5 1 |
             1' 7 6 5 6 5 4 3 4 3 2 |
             1 3 5 3 1' 5 |
@@ -255,13 +269,13 @@ export const TUNES: Tune[] = [
             2' 3' 2' 1' 7 1' 7 6 5 6 5 4 |
             3 6 5 #4 5 #4 3 2 3 2 1`,
     bass: `- - - - - |
-           1 - - - - - - - - - - |
-           1 - - - - - |
-           1 - - - - - - - - - - - |
-           6 - - - - - - - - - - - |
-           2 - - - - - |
-           5 - - - - - - - - - - - |
-           6 - - - - - - - - - -`,
+           - 1 - 3 - 1 - 5 - 1 - |
+           1 7 5 5 3 3 |
+           3 - 4 - 3 - 4 - 3 - 4 - |
+           1 - 2 - 1 - 2 - 1 - 2 - |
+           6 7 6 7 6 7 |
+           #4 - 2 - 5 - 2 - 7 - 5 - |
+           1 1 - 6 - 6 - #4 - #4 -`,
   },
   {
     id: 'mendelssohn-romance-19-1',
@@ -277,6 +291,109 @@ export const TUNES: Tune[] = [
     bass: `- | 1 - - - | 5 - - - | 2 - - - - - | 5 - - |
            1 - - - | 5 - - - | 1 - | 1 - | 2 - - - - |
            2 - | 2 - - | 6 - - - - | 5 - | 5 - -`,
+  },
+  {
+    id: 'grieg-arietta-12-1',
+    title: 'Arietta (Op. 12 No. 1)',
+    composer: 'Grieg',
+    mode: 'major',
+    level: 'medium',
+    alsoLevels: ['easy', 'hard'],
+    source: 'MusicXML score (grieg-arietta.mxl), the melody of bars 1-12, 17-19 and 22 (the repeat of bars 13-16 and the closing bars are skipped), every note one beat; the bass notes are the left-hand bass line where it sounds with the melody',
+    score: `3' 3' 3' 3' | 3' #1' 2' | 2' 2' 2' 2' | 2' 7 1' | 1' 1' 7 7 | 6 6 5 | 1' 1' 7 5 7 | 6 6 5 |
+            #4 5 6 7 2' 1' | #2 3 | 2 3 4 #5 7 6 | 1 |
+            5 5 #4 2 #4 | 4 4 3 | 2 3 4 #5 7 6 | 1`,
+    bass: `1 - - - | 1 - - | 1 - - - | 1 - - | 6 - 5 - | #4 - 7 | 6 - 5 - - | #4 - 7 |
+           6 - - - - - | 1 - | 4 - - - - - | 5 |
+           b7 - 6 - - | 2 - 3 | 4 - - - - - | 5`,
+  },
+  {
+    id: 'burgmuller-limpid-stream-100-5',
+    title: 'The Limpid Stream (Op. 100 No. 5)',
+    composer: 'Burgmüller',
+    mode: 'major',
+    level: 'medium',
+    alsoLevels: ['easy', 'hard'],
+    source: 'MusicXML score (burgmuller-op100-5.mxl), the right hand of bars 1-11 (the climb to C7 in bars 12-14 is skipped to keep it in range), every note one beat; the bass notes are the left-hand chord roots where they sound with the melody',
+    score: `3' 2' 1' 7 1' 7 6 5 6 5 4 3 | 5 4 4 | 2' 1' 7 6 5 6 7 1' 2' 3' 4' 5' | 4' 3' 3' |
+            3' 2' 1' 7 1' 7 6 #5 6 | 2' 1' 7 6 7 6 5 #4 5 #4 3 2 | b3 2 3 2 7 6 | 5 |
+            5 5 #4 5 6 5 | 5 5 6 7 7 1' 2' | 1' 1' 2' 3' 3' 4' 5'`,
+    bass: `1 - - - - - - - - - - - | 1 - 1 | 7 - - - - - - - - - - - | 1 - 1 |
+           1 - - - - - - - 1 | 2 - - - - - - - 2 - - - | 2 - 2 - 2 - | 5 |
+           5 - - - - - | 4 5 - 4 5 - 4 | 3 5 - 3 5 - 3`,
+    hardBass: `1 - - - 3 - - - 5 - - - | 1 - 1 | 7 - - - 4 - - - 5 - - - | 1 - 1 |
+               1 - - - 3 - - - 1 | 2 - - - 5 - - - 2 - - - | 2 - 2 - 2 - | 5 |
+               5 - - - - - | 4 5 - 4 5 - 4 | 3 5 - 3 5 - 3`,
+  },
+  {
+    id: 'satie-gnossienne-1',
+    title: 'Gnossienne No. 1',
+    composer: 'Satie',
+    mode: 'minor',
+    level: 'medium',
+    alsoLevels: ['easy', 'hard'],
+    source: 'MusicXML score (satie-gnossienne1.mxl), the melody of lines 1-3, 6 and 7 without the grace notes (the lines with the run up to B5 are skipped to keep it in range), every note one beat; the bass notes are the written bass, with the left-hand chords added on hard',
+    score: `5 7 #6 5 #4 #4 5 7 #6 5 1' 1' 5 7 #6 5 #4 2 2 2 2 |
+            2 1 1 1 5 7 #6 5 #4 #4 5 7 #6 5 1' 1' 5 7 #6 5 |
+            #4 2 2 2 2 2 1 1 1 4 2 4 2 2 1 1 1 |
+            2 1 1 1 4 2 4 2 2 1 1 1 4 2 4 2 |
+            2 1 1 1 5 7 #6 5 #4 5 7 #6 5 1' 5 7 #6 5 #4`,
+    bass: `- - - - 1 - - - - - 1 - - - - - 1 - 5 - - |
+           1 - - 1 - - - - 1 - - - - - 1 - - - - - |
+           1 - 5 - - 1 - - 1 4 - 4 - 1 - - 1 |
+           1 - - 1 4 - 4 - 1 - - 1 4 - 4 - |
+           1 - - 1 - - - - 1 - - - - 1 - - - - 1`,
+    hardBass: `3 - - 3 1 - 3 - - 3 1 - 3 - - 3 1 - 5 7 7 |
+               1 3 - 1 3 - - 3 1 - 3 - - 3 1 - 3 - - 3 |
+               1 - 5 7 7 1 3 - 1 4 - 4 - 1 3 - 1 |
+               1 3 - 1 4 - 4 - 1 3 - 1 4 - 4 - |
+               1 3 - 1 3 - - 3 1 3 - - 3 1 3 - - 3 1`,
+  },
+  {
+    id: 'kuhlau-sonatina-20-1',
+    title: 'Sonatina in C (Op. 20 No. 1), 1st movement',
+    composer: 'Kuhlau',
+    mode: 'major',
+    level: 'medium',
+    alsoLevels: ['easy', 'hard'],
+    easyBothPace: 0.8,
+    source: 'MusicXML score (kuhlau-sonatina-op20no1-1st.mxl), the right hand of bars 1-2, 6-8, 17-20 and 22-25 (the flourishes up to E6 in bars 3-5 and the high runs are skipped to keep it in range), every note one beat; the bass notes are the left hand where it sounds with the melody (on every aligned note on hard, on the beat otherwise)',
+    score: `1' 3' | 5' 5' 5' 5' 5' | 3' 5' 3' | #1' 2' 4' 3' 2' 6' 4' 2' | 1' 7 2' 7 5 |
+            7 7' 6' 5' | #4' 3' #2' 3' 3' 2' 1' | 7 6 #5 6 6 1' 3' 2' | 2' 7 |
+            #2' 3' 6' 5' #4' 3' 2' 1' | #6 7 3' 2' #1' 2' 1' 6 |
+            5 6 7 1' 2' 3' #4' 5' 6' 7' 6' 5' #4' 3' 2' | #1' 2' 3' 2' 1' 7 6 5 #4 #4 #4 #4`,
+    bass: `1 1 | 1 1 - 3 - | 1 1 - | 4 - - - - - - - | 5 - - - - |
+           5 7 7 - | 5 - 1 - 5 1 - | #4 - 1 - #4 - 1 - | 5 5 |
+           1 - - - - - - - | 2 - - - 2 - - - |
+           5 - - - - - - - - - - - - - - | - - - - - - - - - - 2 -`,
+    hardBass: `1 1 | 1 1 5 3 5 | 1 1 5 | 4 - - - - - - - | 5 - - - - |
+               5 7 7 2 | 5 3 1 3 5 1 3 | #4 2 1 2 #4 2 1 2 | 5 5 |
+               1 - - - - - - - | 2 - - - 2 - - - |
+               5 - - - - - - - - - - - - - - | - - - - - - - - - 2 2 2`,
+  },
+  {
+    id: 'schumann-distant-lands-15-1',
+    title: 'Of Foreign Lands and Peoples (Op. 15 No. 1)',
+    composer: 'Schumann',
+    mode: 'minor',
+    level: 'medium',
+    alsoLevels: ['easy', 'hard'],
+    pace: 0.8,
+    easyBothPace: 0.8,
+    mediumBothPace: 0.85,
+    source: 'MusicXML score (schumann-gens-pays-lointains-op15-1.mxl), the right-hand melody of bars 1-20 (the triplet inner voice is dropped, chords in bars 9-12 reduced to their top note), every note one beat; the bass notes are the left hand where it sounds with the melody (on every aligned note on hard, on the beat otherwise); slowed down because the original is fast',
+    score: `5 3' | 2' 1' 7 | 5 3' | 2' 1' 7 | 5 3' | 1' 7 6 | 4 7 | 5:2 |
+            5 6 | 4 5 | 3 4 | 2 3 | 1 2 | 3 4 5 6 |
+            7 3' | 2' 1' 7 | 5 3' | 2' 1' 7 | 5 3' | 1' 7 6`,
+    bass: `3 #6 | 7 - 2 | 3 #6 | 7 - 2 | 3 5 | 6 - 1 | 7 7 | 3 |
+           1 4 | 7 5 | 6 2 | 5 3 | 6 6 | 5 - 3 - |
+           3 #6 | 7 - 2 | 3 #6 | 7 - 2 | 3 5 | 6 - 1`,
+    hardBass: `3 #6 | 7 - 2 | 3 #6 | 7 - 2 | 3 5 | 6 - 1 | 7 7 | 3 |
+               1 4 | 7 5 | 6 2 | 5 3 | 6 6 | 5 4 3 - |
+               3 #6 | 7 - 2 | 3 #6 | 7 - 2 | 3 5 | 6 - 1`,
+    easyBass: `3 - | 7 - - | 3 - | 7 - - | 3 - | 6 - - | 7 - | 3 |
+               1 - | 7 - | 6 - | 5 - | 6 - | 5 - - - |
+               3 - | 7 - - | 3 - | 7 - - | 3 - | 6 - -`,
   },
   {
     id: 'chopin-waltz-69-2',

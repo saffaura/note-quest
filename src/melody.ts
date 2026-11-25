@@ -92,10 +92,16 @@ export function tunePool(level: Difficulty, mode: 'major' | 'minor', library: Tu
   return pool;
 }
 
-/** Speed multiplier for a tune at a difficulty: its own pace, slowed further when offered on easy via `easyPace`. */
-export function tunePace(tune: Tune, difficulty: Difficulty): number {
-  const base = tune.pace ?? 1;
-  return difficulty === 'easy' && tune.level !== 'easy' && tune.easyPace !== undefined ? base * tune.easyPace : base;
+/**
+ * Speed multiplier for a tune at a difficulty: its own pace, slowed further when offered on easy
+ * via `easyPace`, and by `easyBothPace` on easy when both clefs are played.
+ */
+export function tunePace(tune: Tune, difficulty: Difficulty, clef?: ClefMode): number {
+  let pace = tune.pace ?? 1;
+  if (difficulty === 'easy' && tune.level !== 'easy' && tune.easyPace !== undefined) pace *= tune.easyPace;
+  if (difficulty === 'easy' && clef === 'both' && tune.easyBothPace !== undefined) pace *= tune.easyBothPace;
+  if (difficulty === 'medium' && clef === 'both' && tune.mediumBothPace !== undefined) pace *= tune.mediumBothPace;
+  return pace;
 }
 
 /** A short random-walk melody, used when no library tune fits the chosen key and clef. */
@@ -178,6 +184,8 @@ const CHUNK_SIZE = 6;
 const MAX_GAP_SECONDS = 2;
 /** Speed multiplier for hard difficulty with both clefs (about the same speed as medium). */
 export const BOTH_HARD_PACE = 0.7;
+/** Speed multiplier for medium difficulty with both clefs (a bit slower than normal medium). */
+export const BOTH_MEDIUM_PACE = 0.8;
 /** With a bass line the melody stays above middle C and each bass note sits in this window. */
 const MELODY_FLOOR = 60;
 const BASS_WINDOW: [number, number] = [48, 59];
@@ -300,18 +308,18 @@ export function buildSequence(settings: MelodySettings, rng: Rng, minBeats?: num
   if (tuneId) {
     const tune = TUNES.find((t) => t.id === tuneId);
     if (!tune) throw new Error(`Unknown tune "${tuneId}"`);
-    source = tuneEvents(tune);
+    source = tuneEvents(tune, difficulty);
     first = placeWithExtras(source);
     if (!first) throw new Error(`"${tune.title}" does not fit this key on the ${clef} staff. Try another key or clef.`);
     title = tune.title;
-    pace = tunePace(tune, difficulty);
+    pace = tunePace(tune, difficulty, clef);
   } else {
     for (const tune of shuffle(tunePool(difficulty, key.mode), rng)) {
-      source = tuneEvents(tune);
+      source = tuneEvents(tune, difficulty);
       first = placeWithExtras(source);
       if (first) {
         title = tune.title;
-        pace = tunePace(tune, difficulty);
+        pace = tunePace(tune, difficulty, clef);
         break;
       }
     }
@@ -323,8 +331,9 @@ export function buildSequence(settings: MelodySettings, rng: Rng, minBeats?: num
     }
   }
 
-  // Reading two staves at hard speed is too much for learners, so that combination is slower.
+  // Reading two staves at medium and hard speed is too much for learners, so those are slower.
   if (clef === 'both' && difficulty === 'hard') pace *= BOTH_HARD_PACE;
+  if (clef === 'both' && difficulty === 'medium') pace *= BOTH_MEDIUM_PACE;
 
   const needed = minBeats ?? beatsNeeded(difficulty, pace);
   // Long notes would leave the staff empty for seconds, so the next note never starts later than this.

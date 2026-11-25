@@ -78,7 +78,7 @@ With the **Both** clef the melody is played on the treble staff and a simple lef
 staff (one chord root per bar, generated from the melody by `src/harmony.ts`). Set `meter` (beats per
 bass note, default 4) and `pickup` (lead-in beats) on a tune to line the bass up with its bars, or
 write the bass by hand with a `bass` string that has one token per melody token (`-` = no bass note).
-Hard difficulty is slowed down in Both mode so two staves stay readable.
+Medium and hard are slowed down in Both mode (to 0.8x and 0.7x) so two staves stay readable. The Kuhlau Sonatina is also slowed to 0.8x on easy in Both mode (`easyBothPace`), and Schumann's Op. 15 No. 1 is slowed likewise (also on medium, `mediumBothPace`) and gets a sparser easy bass (`easyBass`, downbeats only).
 
 ## Credits and licences
 

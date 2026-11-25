@@ -300,6 +300,9 @@ function refreshDebug(): void {
   const facts = [`${tune.level}`, `written in ${tune.mode}`, `${beats} beats`];
   if (tune.pace) facts.push(`pace ${tune.pace}`);
   if (tune.easyPace) facts.push(`also easy (pace ${tune.easyPace})`);
+  if (tune.easyBothPace) facts.push(`easy with both clefs: pace x${tune.easyBothPace}`);
+  if (tune.mediumBothPace) facts.push(`medium with both clefs: pace x${tune.mediumBothPace}`);
+  if (tune.easyBass) facts.push('sparser bass on easy');
   if (tune.draft) facts.push('draft');
   const where = `${keyLabel(currentKey())}, ${settings.clef}`;
   info.textContent =

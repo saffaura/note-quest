@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { BOTH_HARD_PACE, DIFFICULTY, buildSequence, mulberry32, timing, tunePace, tuneFits, tunePool } from './melody';
+import { BOTH_HARD_PACE, BOTH_MEDIUM_PACE, DIFFICULTY, buildSequence, mulberry32, timing, tunePace, tuneFits, tunePool } from './melody';
 import { GAME_SECONDS, Game } from './game';
 import { PIANO_RANGE, TONICS, type ClefMode, type Difficulty, type Key } from './theory';
-import { TUNES, parseTune } from './tunes';
+import { TUNES, parseTune, tuneEvents } from './tunes';
 
 describe('tune parser', () => {
   it('parses degrees, octaves, alterations and durations', () => {
@@ -121,7 +121,8 @@ describe('sequence building', () => {
           try {
             const seq = buildSequence({ key, clef, difficulty, tuneId: tune.id }, mulberry32(3));
             expect(seq.titles).toEqual([tune.title]);
-            expect(seq.pace).toBeCloseTo(tunePace(tune, difficulty) * (clef === 'both' && difficulty === 'hard' ? BOTH_HARD_PACE : 1));
+            const bothFactor = clef !== 'both' ? 1 : difficulty === 'hard' ? BOTH_HARD_PACE : difficulty === 'medium' ? BOTH_MEDIUM_PACE : 1;
+            expect(seq.pace).toBeCloseTo(tunePace(tune, difficulty, clef) * bothFactor);
             played++;
           } catch (err) {
             expect((err as Error).message).toMatch(/does not fit/);
@@ -279,6 +280,59 @@ describe('sequence building', () => {
     }
   });
 
+  it('uses the fuller hard bass line only on hard', () => {
+    const tune = TUNES.find((t) => t.id === 'burgmuller-limpid-stream-100-5')!;
+    expect(tune.hardBass).toBeDefined();
+    const count = (events: ReturnType<typeof tuneEvents>) => events.filter((e) => e.bass).length;
+    const medium = tuneEvents(tune, 'medium');
+    const hard = tuneEvents(tune, 'hard');
+    expect(count(hard)).toBeGreaterThan(count(medium));
+    expect(count(tuneEvents(tune))).toBe(count(medium));
+    const key: Key = { tonic: TONICS.major.find((t) => t.letter === 0 && t.acc === 0)!, mode: 'major' };
+    const pairs = (difficulty: Difficulty) =>
+      buildSequence({ key, clef: 'both', difficulty, tuneId: tune.id }, mulberry32(3)).events.filter((e) => e.notes.length === 2).length;
+    expect(pairs('hard')).toBeGreaterThan(pairs('medium') * 0.9);
+  });
+
+  it('slows medium down when both clefs are played', () => {
+    const key: Key = { tonic: TONICS.major[0], mode: 'major' };
+    const treble = buildSequence({ key, clef: 'treble', difficulty: 'medium', tuneId: 'ravel-pavane' }, mulberry32(2));
+    const both = buildSequence({ key, clef: 'both', difficulty: 'medium', tuneId: 'ravel-pavane' }, mulberry32(2));
+    expect(both.pace).toBeCloseTo(treble.pace * BOTH_MEDIUM_PACE);
+    expect(timing('medium', both.pace).bps).toBeLessThan(timing('medium', treble.pace).bps);
+  });
+
+  it('slows Kuhlau down on easy only when both clefs are played', () => {
+    const key: Key = { tonic: TONICS.major[0], mode: 'major' };
+    const id = 'kuhlau-sonatina-20-1';
+    const easyBoth = buildSequence({ key, clef: 'both', difficulty: 'easy', tuneId: id }, mulberry32(2));
+    const easyTreble = buildSequence({ key, clef: 'treble', difficulty: 'easy', tuneId: id }, mulberry32(2));
+    const mediumBoth = buildSequence({ key, clef: 'both', difficulty: 'medium', tuneId: id }, mulberry32(2));
+    expect(easyTreble.pace).toBe(1);
+    expect(easyBoth.pace).toBeCloseTo(0.8);
+    expect(mediumBoth.pace).toBeCloseTo(BOTH_MEDIUM_PACE);
+  });
+
+  it('offers Schumann Of Foreign Lands on easy, medium and hard in minor keys, slowed down', () => {
+    const tune = TUNES.find((t) => t.id === 'schumann-distant-lands-15-1')!;
+    for (const level of levels) expect(tunePool(level, 'minor').includes(tune), level).toBe(true);
+    for (const difficulty of levels) {
+      const seq = buildSequence(
+        { key: { tonic: TONICS.minor[0], mode: 'minor' }, clef: 'treble', difficulty, tuneId: tune.id },
+        mulberry32(4),
+      );
+      expect(seq.pace).toBeCloseTo(0.8);
+    }
+    const key: Key = { tonic: TONICS.minor[0], mode: 'minor' };
+    const count = (events: ReturnType<typeof tuneEvents>) => events.filter((e) => e.bass).length;
+    expect(count(tuneEvents(tune, 'easy'))).toBeLessThan(count(tuneEvents(tune, 'medium')) * 0.6);
+    const pairs = (difficulty: Difficulty) =>
+      buildSequence({ key, clef: 'both', difficulty, tuneId: tune.id }, mulberry32(4)).events.filter((e) => e.notes.length === 2).length;
+    expect(pairs('easy')).toBeLessThan(pairs('medium') * 0.6);
+    expect(buildSequence({ key, clef: 'both', difficulty: 'easy', tuneId: tune.id }, mulberry32(4)).pace).toBeCloseTo(0.64);
+    expect(buildSequence({ key, clef: 'both', difficulty: 'medium', tuneId: tune.id }, mulberry32(4)).pace).toBeCloseTo(0.8 * 0.85 * BOTH_MEDIUM_PACE);
+  });
+
   it('includes Chopin at every difficulty', () => {
     for (const level of ['easy', 'medium', 'hard'] as const) {
       expect(TUNES.some((t) => t.composer === 'Chopin' && t.level === level)).toBe(true);
@@ -289,10 +343,10 @@ describe('sequence building', () => {
     const seen = new Set<string>();
     for (const mode of ['major', 'minor'] as const) {
       for (const difficulty of levels) {
-        for (const tonic of TONICS[mode]) {
+        for (const [ti, tonic] of TONICS[mode].entries()) {
           const key: Key = { tonic, mode };
           for (let seed = 0; seed < 12; seed++) {
-            const seq = buildSequence({ key, clef: 'treble', difficulty }, mulberry32(seed));
+            const seq = buildSequence({ key, clef: 'treble', difficulty }, mulberry32(ti * 101 + seed));
             seen.add(seq.titles[0]);
           }
         }
