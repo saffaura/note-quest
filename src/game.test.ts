@@ -94,3 +94,75 @@ describe('Game scoring', () => {
   });
 });
 
+describe('Streak bonus', () => {
+  const run = (count: number) => make(Array.from({ length: count }, (_, i) => ev(i, 0, 60)));
+
+  it('adds +3 to every correct note after the fifth in a row', () => {
+    const g = run(8);
+    const bonuses: number[] = [];
+    for (let i = 0; i < 8; i++) {
+      const fx = g.press(60);
+      bonuses.push(fx && fx.type === 'exact' ? fx.bonus : -1);
+    }
+    expect(bonuses).toEqual([0, 0, 0, 0, 0, 3, 3, 3]);
+    expect(g.score).toBe(8 * 5 + 3 * 3);
+    expect(g.bonusPoints).toBe(9);
+    expect(g.onStreak).toBe(true);
+  });
+
+  it('also applies to right-note-wrong-octave hits', () => {
+    const g = run(7);
+    for (let i = 0; i < 5; i++) g.press(60);
+    const fx = g.press(72);
+    expect(fx?.type === 'octave' && fx.bonus).toBe(3);
+    expect(g.score).toBe(25 + 1 + 3);
+  });
+
+  it('stops at a wrong note and has to be earned again', () => {
+    const g = run(14);
+    for (let i = 0; i < 6; i++) g.press(60);
+    expect(g.onStreak).toBe(true);
+    g.press(61);
+    expect(g.streak).toBe(0);
+    expect(g.onStreak).toBe(false);
+    const after: number[] = [];
+    for (let i = 0; i < 6; i++) {
+      const fx = g.press(60);
+      after.push(fx && fx.type === 'exact' ? fx.bonus : -1);
+    }
+    expect(after).toEqual([0, 0, 0, 0, 0, 3]);
+  });
+
+  it('stops when a note is missed', () => {
+    const g = run(8);
+    for (let i = 0; i < 6; i++) g.press(60);
+    g.update(100);
+    expect(g.streak).toBe(0);
+    expect(g.onStreak).toBe(false);
+  });
+});
+
+describe('Wrong-note hints', () => {
+  it('shows the correct key from the second wrong press in a row', () => {
+    const g = make([ev(0, 0, 60, 64)]);
+    const first = g.press(61);
+    expect(first?.type === 'wrong' && first.hint).toEqual([]);
+    const second = g.press(62);
+    expect(second?.type === 'wrong' && second.hint).toEqual([60, 64]);
+  });
+
+  it('only hints for notes that are still pending, and resets after a correct press', () => {
+    const g = make([ev(0, 0, 60, 64), ev(1, 1, 67)]);
+    g.press(61);
+    g.press(60);
+    const wrong = g.press(62);
+    expect(wrong?.type === 'wrong' && wrong.hint).toEqual([]);
+    const again = g.press(63);
+    expect(again?.type === 'wrong' && again.hint).toEqual([64]);
+    g.press(64);
+    g.press(61);
+    const next = g.press(62);
+    expect(next?.type === 'wrong' && next.hint).toEqual([67]);
+  });
+});
+

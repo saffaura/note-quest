@@ -1,6 +1,6 @@
 import { isBlackKey } from './theory';
 
-export type KeyFlash = 'good' | 'okay' | 'bad';
+export type KeyFlash = 'good' | 'okay' | 'bad' | 'hint';
 
 /** On-screen piano. Pointer events give us mouse, touch and multi-touch with one code path. */
 export class Piano {
@@ -45,12 +45,12 @@ export class Piano {
     const el = this.keys.get(midi);
     if (!el) return;
     window.clearTimeout(this.flashTimers.get(midi));
-    el.classList.remove('good', 'okay', 'bad');
+    el.classList.remove('good', 'okay', 'bad', 'hint');
     void el.offsetWidth; // restart the CSS animation
     el.classList.add(kind);
     this.flashTimers.set(
       midi,
-      window.setTimeout(() => el.classList.remove(kind), 450),
+      window.setTimeout(() => el.classList.remove(kind), kind === 'hint' ? 1300 : 450),
     );
   }
 

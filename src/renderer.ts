@@ -20,6 +20,7 @@ const SAGE = '#1f9e7a';
 const VIOLET = '#7c5cc4';
 const ACCENT = '#98cefb';
 const WINE = '#9b2f4a';
+const GOLD = ['#e8b923', '#f6d55c', '#ffe58a', '#d99a0b', '#fff3b0'];
 const PAPER = '#fbf7ee';
 
 const NOTE_FONT = '"Noto Music", "Segoe UI Symbol", serif';
@@ -152,9 +153,12 @@ export class Renderer {
       return;
     }
     const color = fx.type === 'exact' ? SAGE : VIOLET;
-    this.pop(x, y - space * 1.8, fx.type === 'exact' ? `+${fx.points}` : `+${fx.points} · right note`, color, space);
-    const colors = [SAGE, VIOLET, ACCENT, WINE, '#4f9be0'];
-    const count = fx.type === 'exact' ? 16 : 8;
+    const total = fx.points + fx.bonus;
+    this.pop(x, y - space * 1.8, fx.type === 'exact' ? `+${total}` : `+${total} · right note`, color, space);
+    // On a streak the confetti is gold and there is more of it.
+    const colors = fx.bonus > 0 ? GOLD : [SAGE, VIOLET, ACCENT, WINE, '#4f9be0'];
+    let count = fx.type === 'exact' ? 16 : 8;
+    if (fx.bonus > 0) count += 14;
     for (let i = 0; i < count; i++) {
       const angle = (Math.PI * 2 * i) / count + Math.random() * 0.4;
       const speed = space * (4 + Math.random() * 6);
@@ -185,9 +189,28 @@ export class Renderer {
     ctx.clearRect(0, 0, width, height);
     this.drawStaves();
     if (game) this.drawEvents(game, now, hints);
-    this.drawVanishZone(now);
+    this.drawVanishZone(now, game?.onStreak ?? false);
     this.drawClefsAndSignature();
+    if (game?.onStreak) this.spawnStreakSparks(dt);
     this.drawParticles(dt);
+  }
+
+  /** Gold sparks drifting up around the hit line while a streak bonus is running. */
+  private spawnStreakSparks(dt: number): void {
+    const { hitX, staves, yOf, space } = this.layout;
+    const top = yOf(staves[0].bottomD + 8) - space * 1.5;
+    const bottom = yOf(staves[staves.length - 1].bottomD) + space * 1.5;
+    if (Math.random() > dt * 30) return;
+    this.particles.push({
+      x: hitX + Math.random() * space * 2.4,
+      y: top + Math.random() * (bottom - top),
+      vx: (Math.random() - 0.5) * space,
+      vy: -space * (1.5 + Math.random() * 2),
+      life: 0.9,
+      max: 0.9,
+      color: GOLD[Math.floor(Math.random() * GOLD.length)],
+      size: space * (0.1 + Math.random() * 0.12),
+    });
   }
 
   private drawStaves(): void {
@@ -215,18 +238,20 @@ export class Renderer {
     ctx.stroke();
   }
 
-  private drawVanishZone(now: number): void {
+  private drawVanishZone(now: number, streak: boolean): void {
     const { ctx } = this;
     const { hitX, staves, yOf, space } = this.layout;
     const top = yOf(staves[0].bottomD + 8) - space * 2.4;
     const bottom = yOf(staves[staves.length - 1].bottomD) + space * 2.4;
     const pulse = 0.5 + 0.5 * Math.sin(now / 350);
+    // Red normally; green while a streak bonus is running.
+    const rgb = streak ? '31, 158, 122' : '155, 47, 74';
     const grad = ctx.createLinearGradient(hitX, 0, hitX + space * 2.2, 0);
-    grad.addColorStop(0, `rgba(155, 47, 74, ${0.2 + pulse * 0.08})`);
-    grad.addColorStop(1, 'rgba(155, 47, 74, 0)');
+    grad.addColorStop(0, `rgba(${rgb}, ${0.2 + pulse * 0.08})`);
+    grad.addColorStop(1, `rgba(${rgb}, 0)`);
     ctx.fillStyle = grad;
     ctx.fillRect(hitX, top, space * 2.2, bottom - top);
-    ctx.strokeStyle = `rgba(155, 47, 74, ${0.5 + pulse * 0.2})`;
+    ctx.strokeStyle = `rgba(${rgb}, ${0.5 + pulse * 0.2})`;
     ctx.lineWidth = 1.5;
     ctx.beginPath();
     ctx.moveTo(hitX, top);

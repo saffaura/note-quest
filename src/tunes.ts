@@ -333,10 +333,11 @@ export const TUNES: Tune[] = [
     composer: 'Liszt',
     mode: 'major',
     level: 'medium',
-    source: 'MusicXML score (liebestraum.mxl), bars 3-6, 77-78, 81-82',
-    score: `3:2 3:2 4:2 3:2 4:.5 5:.5 3':.5 5:.5 4 4:.5 5:.5 7:.5 5:.5 4:.5
-            4:2 3 3:2 2 3:2 2
-            6:2 2:2 2 2 3 2`,
+    source: 'MusicXML score (liebestraum.mxl), the opening theme, bars 0-12: the sung melody line (held C, then D♭ and the F G A♭ C B♭ rise) taken from the voices of both hands, every note one beat',
+    score: `5, | 3 3 | 3 3 | 3 3 4 3 | 3 6, 6, | 6, 7, 1 3 2 | 1
+            5, | 3 3 | 3 3 | 3 3 4 3 | 6 6, | 6, 7, 1 3 2 | 1`,
+    bass: `- | 1 - | 7 - | 6 - - - | 2 - - | 5 - - - - | 1
+           - | 1 - | 7 - | 6 - - - | 2 - | 5 - - - - | 1`,
   },
   {
     id: 'beethoven-appassionata-2',
@@ -344,10 +345,15 @@ export const TUNES: Tune[] = [
     composer: 'Beethoven',
     mode: 'major',
     level: 'medium',
-    source: 'MusicXML score (beethoven-appassionata-2nd.mxl), bars 1-18, 55-60, 69-76',
-    score: `5 6 5:1.5 6:.5 5 5 5:2 1' 1' 1':1.5 1':.5 1' 7 1':2 5 5 5 7:.5 1':.5 5 5:2 3':.5 1':.5 5 5 5':2 2' 5 1':2 5 6 5 6
-            5 6:.5 5:.5 5:.5 5:.5 5:.5 5:2 1' 1':.5 1' 1':.5 1':.5 1':.5 7:.5 7:.5
-            1':2 5 5:.5 5:.5 5:.5 5:.5 5 5 5:.5 5:.5 5:.5 5:.5 5 7:.5 #6:.5 7:.5 1':.5 3':.5 2':.5 1':.5 4' 5`,
+    source: 'MusicXML score (beethoven-appassionata-2nd.mxl), right hand bars 43-49 (the broken-chord variation), every written note, one beat each',
+    meter: 8,
+    score: `1' 5 3 1' 5 3 1 5
+            1' 5 3 1' 5 3 1 5
+            5 2 7, 5 7, 5 4 7,
+            1 3 5 1' 7 4 1' 3
+            5 2 7, 5 7, 5 4 7,
+            1 3 5 3' 2' 4 1' 3
+            5 2 7, 5 7, 5 4 7,`,
   },
   {
     id: 'chopin-berceuse-57',

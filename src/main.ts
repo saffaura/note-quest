@@ -418,6 +418,9 @@ function updateHud(force = false): void {
   }
   $('streak').textContent = String(game.streak);
   $('streak-pill').classList.toggle('hot', game.streak >= 3);
+  const onStreak = game.onStreak;
+  $('streak-pill').classList.toggle('fire', onStreak);
+  $('stage').classList.toggle('streaking', onStreak);
   const title = game.current()?.ev.tuneTitle ?? lastTitle;
   if (title !== lastTitle) {
     lastTitle = title;
@@ -433,7 +436,10 @@ function handleFx(fx: GameFx | null, pressedMidi?: number): void {
   else if (fx.type === 'octave') {
     piano.flash(pressedMidi, 'okay');
     piano.flash(fx.event.ev.notes[fx.noteIndex].midi, 'okay');
-  } else if (fx.type === 'wrong') piano.flash(pressedMidi, 'bad');
+  } else if (fx.type === 'wrong') {
+    piano.flash(pressedMidi, 'bad');
+    for (const midi of fx.hint) piano.flash(midi, 'hint');
+  }
 }
 
 piano.onPress = (midi) => {

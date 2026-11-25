@@ -6,6 +6,11 @@ export const LEAD_FRACTION = 0.8;
 export const POINTS_EXACT = 5;
 export const POINTS_OCTAVE = 1;
 export const POINTS_WRONG = -2;
+/** Correct notes in a row after which every further correct note earns a bonus. */
+export const STREAK_BONUS_AT = 5;
+export const POINTS_STREAK_BONUS = 3;
+/** Wrong presses in a row after which the correct key is shown. */
+export const WRONG_BEFORE_HINT = 2;
 
 export type NoteStatus = 'pending' | 'exact' | 'octave' | 'missed';
 
@@ -17,9 +22,9 @@ export interface RuntimeEvent {
 }
 
 export type GameFx =
-  | { type: 'exact' | 'octave'; event: RuntimeEvent; noteIndex: number; points: number }
+  | { type: 'exact' | 'octave'; event: RuntimeEvent; noteIndex: number; points: number; bonus: number; streak: number }
   | { type: 'miss'; event: RuntimeEvent; noteIndex: number; points: 0 }
-  | { type: 'wrong'; event: RuntimeEvent; midi: number; points: number };
+  | { type: 'wrong'; event: RuntimeEvent; midi: number; points: number; hint: number[] };
 
 export interface GameConfig {
   bps: number;
@@ -37,6 +42,8 @@ export class Game {
   octaveHits = 0;
   misses = 0;
   wrongPresses = 0;
+  bonusPoints = 0;
+  private wrongInRow = 0;
   private expireIndex = 0;
 
   constructor(
@@ -100,26 +107,36 @@ export class Game {
     if (noteIndex >= 0) {
       event.status[noteIndex] = 'exact';
       this.exactHits++;
-      this.hit(POINTS_EXACT);
-      return { type: 'exact', event, noteIndex, points: POINTS_EXACT };
+      return this.hit({ type: 'exact', event, noteIndex, points: POINTS_EXACT });
     }
     noteIndex = pitches.findIndex((p, i) => event.status[i] === 'pending' && (p.midi - midi) % 12 === 0);
     if (noteIndex >= 0) {
       event.status[noteIndex] = 'octave';
       this.octaveHits++;
-      this.hit(POINTS_OCTAVE);
-      return { type: 'octave', event, noteIndex, points: POINTS_OCTAVE };
+      return this.hit({ type: 'octave', event, noteIndex, points: POINTS_OCTAVE });
     }
     this.wrongPresses++;
+    this.wrongInRow++;
     this.streak = 0;
     this.addScore(POINTS_WRONG);
-    return { type: 'wrong', event, midi, points: POINTS_WRONG };
+    const hint = this.wrongInRow >= WRONG_BEFORE_HINT ? pitches.filter((_, i) => event.status[i] === 'pending').map((p) => p.midi) : [];
+    return { type: 'wrong', event, midi, points: POINTS_WRONG, hint };
   }
 
-  private hit(points: number): void {
+  /** Score a correct note; once a streak is running every further correct note earns a bonus. */
+  private hit(base: { type: 'exact' | 'octave'; event: RuntimeEvent; noteIndex: number; points: number }): GameFx {
+    const bonus = this.streak >= STREAK_BONUS_AT ? POINTS_STREAK_BONUS : 0;
     this.streak++;
+    this.wrongInRow = 0;
     this.bestStreak = Math.max(this.bestStreak, this.streak);
-    this.addScore(points);
+    this.bonusPoints += bonus;
+    this.addScore(base.points + bonus);
+    return { ...base, bonus, streak: this.streak };
+  }
+
+  /** True while the streak bonus is being earned. */
+  get onStreak(): boolean {
+    return this.streak >= STREAK_BONUS_AT;
   }
 
   private addScore(points: number): void {
