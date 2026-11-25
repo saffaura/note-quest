@@ -546,7 +546,7 @@ setupDebug();
 refreshHome();
 show('home');
 if (import.meta.env.DEV) {
-  Object.defineProperty(window, '__nq', { get: () => ({ game, running, paused }) });
+  Object.defineProperty(window, '__nq', { get: () => ({ game, running, paused, audio }) });
 }
 // Canvas text needs the music font loaded before the first draw.
 void document.fonts.load('40px "Noto Music"', '𝄞𝄢♯♭').then(() => renderer.resize());

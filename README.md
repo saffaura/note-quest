@@ -1,5 +1,9 @@
 # Note Quest
 
+**Play:** https://saffaura.github.io/note-quest/
+**Debug mode:** https://saffaura.github.io/note-quest/?debug (adds a "Debug" button on the home
+screen for picking a specific tune to test)
+
 A landscape-only web game for learning to read sheet music. Pick a key (major or minor), a clef
 (treble, bass or both) and a difficulty, then tap the piano keys that match the notes sliding
 across the staff. Games last 60 seconds. Each game plays one randomly chosen tune, repeated
