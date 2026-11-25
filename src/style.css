@@ -762,7 +762,7 @@ h1 {
 .piano {
   position: relative;
   flex: none;
-  height: clamp(96px, 33vh, 200px);
+  height: clamp(120px, 42vh, 320px);
   touch-action: none;
   background: #0d0913;
   border-radius: 0.4rem 0.4rem 1rem 1rem;
