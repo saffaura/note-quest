@@ -45,6 +45,8 @@ export interface Tune {
    * (below 1 = slower), for tunes that are fine for easy readers when they are slowed down.
    */
   easyPace?: number;
+  /** Extra difficulties to offer this tune on, besides `level`, at its normal speed there. */
+  alsoLevels?: Difficulty[];
 }
 
 /**
@@ -88,50 +90,26 @@ export function tuneEvents(tune: Tune): TuneEvent[] {
 
 export const TUNES: Tune[] = [
   {
-    id: 'ode-to-joy',
-    title: 'Ode to Joy',
-    composer: 'Beethoven',
+    id: 'bach-prelude-846',
+    title: 'Prelude in C (BWV 846)',
+    composer: 'Bach',
     mode: 'major',
     level: 'easy',
-    score: `3 3 4 5 | 5 4 3 2 | 1 1 2 3 | 3:1.5 2:.5 2:2 |
-            3 3 4 5 | 5 4 3 2 | 1 1 2 3 | 2:1.5 1:.5 1:2`,
+    source: 'MusicXML score (bach-prelude-bwv846.mxl), bars 1-4 (C, Dm7/C, G7/B, C): the written broken-chord figure of each bar, every note one beat; the low B of bar 3 is the bass note, bass as written',
+    score: `1 3 5 1' 3' 5 1' 3' | 1 2 6 2' 4' 6 2' 4' | 2 5 2' 4' 5 2' 4' | 1 3 5 1' 3' 5 1' 3'`,
+    bass: `1 - - - - - - - | 1 - - - - - - - | 7 - - - - - - | 1 - - - - - - -`,
   },
   {
-    id: 'twinkle',
-    title: 'Twinkle, Twinkle, Little Star',
-    composer: 'Traditional',
+    id: 'bach-petit-prelude-939',
+    title: 'Petit Prelude in C (BWV 939)',
+    composer: 'Bach',
     mode: 'major',
     level: 'easy',
-    score: `1 1 5 5 | 6 6 5:2 | 4 4 3 3 | 2 2 1:2 |
-            5 5 4 4 | 3 3 2:2 | 5 5 4 4 | 3 3 2:2 |
-            1 1 5 5 | 6 6 5:2 | 4 4 3 3 | 2 2 1:2`,
-  },
-  {
-    id: 'mary-lamb',
-    title: 'Mary Had a Little Lamb',
-    composer: 'Traditional',
-    mode: 'major',
-    level: 'easy',
-    score: `3 2 1 2 | 3 3 3:2 | 2 2 2:2 | 3 5 5:2 |
-            3 2 1 2 | 3 3 3 3 | 2 2 3 2 | 1:2`,
-  },
-  {
-    id: 'hot-cross-buns',
-    title: 'Hot Cross Buns',
-    composer: 'Traditional',
-    mode: 'major',
-    level: 'easy',
-    score: `3 2 1:2 | 3 2 1:2 | 1 1 1 1 | 2 2 2 2 | 3 2 1:2`,
-  },
-  {
-    id: 'frere-jacques',
-    title: 'Frère Jacques',
-    composer: 'Traditional',
-    mode: 'major',
-    level: 'medium',
-    score: `1 2 3 1 | 1 2 3 1 | 3 4 5:2 | 3 4 5:2 |
-            5:.5 6:.5 5:.5 4:.5 3 1 | 5:.5 6:.5 5:.5 4:.5 3 1 |
-            1 5, 1:2 | 1 5, 1:2`,
+    source: 'MusicXML score (bach-petit-prelude-bwv939.mxl), bars 1-8, top note of the right hand, every note one beat, bass as written',
+    score: `1 3 5 3 1 b7 5 | 6 1 4 6 4 1 1' 6 | 7 5 7 2' 7 5 4' 2' | 3' 3' | 2' 2' |
+            2' 5 7 2' 7 3' | 1' 1' | 1' 2 #4 6 #4 2 1' 6`,
+    bass: `1 - - - - - - | 1 - - - - - - - | 1 - - - - - - - | 1 - | 2 - |
+           5 - - - - - | 6 - | 2 - - - - - - -`,
   },
   {
     id: 'fur-elise',
@@ -208,6 +186,21 @@ export const TUNES: Tune[] = [
            5 - - | 4 - - - - | 2 - - - - - - | 5 - - - |
            5 - - | 2 - - - - | 3 - - - - - - | 6 - - - |
            3 - - - - - - | 6 - - - | 5 -`,
+  },
+  {
+    id: 'schumann-melodie-68-1',
+    title: 'Melodie (Op. 68 No. 1)',
+    composer: 'Schumann',
+    mode: 'major',
+    level: 'medium',
+    alsoLevels: ['easy', 'hard'],
+    source: 'MusicXML score (schumann-melodie-op68-1.mxl), the whole right-hand melody, bars 1-20 (rests dropped, chords reduced to their top note), every note one beat, bass as written',
+    score: `3' 2' 1' 7 | 6 1' 7 2' 1' 5 | 5' 4' 3' 1' | 7 6 5 | 2' 1' 7 | 4' 3' 2' | 6' 5' 4' 3' | 2' 4' 3' 5' 4' 2' |
+            3' 2' 1' 7 | 6 1' 7 2' 1' 5 | 6' 5' 4' 3' | 2' 4' 7 2' 1' | 2' 1' 7 | 4' 3' 2' | 6' 5' 4' 3' | 2' 4' 3' 5' 4' 2' |
+            3' 2' 1' 7 | 6 1' 7 2' 1' 5 | 6' 5' 4' 3' | 2' 4' 7 2' 1'`,
+    bass: `1 - - - | 4 - - - - - | 3 - - - | 2 - - | 4 - - | 2 - - | 4 - - - | 7 - - - - - |
+           1 - - - | 4 - - - - - | 4 - - - | 4 - - - - | 4 - - | 2 - - | 4 - - - | 7 - - - - - |
+           1 - - - | 4 - - - - - | 4 - - - | 4 - - - -`,
   },
   {
     id: 'chopin-waltz-69-2',

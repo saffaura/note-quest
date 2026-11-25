@@ -83,7 +83,9 @@ const hasAlterations = (t: Tune) => /[#b]\d/.test(t.score);
 export function tunePool(level: Difficulty, mode: 'major' | 'minor', library: Tune[] = TUNES): Tune[] {
   const usable = library.filter((t) => t.mode === mode || !hasAlterations(t));
   const idx = LEVELS.indexOf(level);
-  let pool = usable.filter((t) => t.level === level || (level === 'easy' && t.easyPace !== undefined));
+  let pool = usable.filter(
+    (t) => t.level === level || t.alsoLevels?.includes(level) || (level === 'easy' && t.easyPace !== undefined),
+  );
   for (let i = idx - 1; i >= 0 && pool.length < 4; i--) {
     pool = pool.concat(usable.filter((t) => t.level === LEVELS[i]));
   }

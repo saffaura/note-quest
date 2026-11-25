@@ -239,7 +239,9 @@ $<HTMLInputElement>('opt-hints').addEventListener('change', (e) => {
 let debugTuneId = '';
 if (DEBUG) {
   try {
-    const saved = localStorage.getItem(STORAGE_DEBUG) ?? '';
+    // An earlier version remembered the pick forever, which could silently force one song on later visits.
+    localStorage.removeItem(STORAGE_DEBUG);
+    const saved = sessionStorage.getItem(STORAGE_DEBUG) ?? '';
     if (TUNES.some((t) => t.id === saved)) debugTuneId = saved;
   } catch {
     /* storage unavailable: start on random */
@@ -263,7 +265,7 @@ function setupDebug(): void {
   select.addEventListener('change', () => {
     debugTuneId = select.value;
     try {
-      localStorage.setItem(STORAGE_DEBUG, debugTuneId);
+      sessionStorage.setItem(STORAGE_DEBUG, debugTuneId);
     } catch {
       /* ignore */
     }

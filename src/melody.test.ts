@@ -104,7 +104,7 @@ describe('sequence building', () => {
       seen.set(seq.titles[0], seq.pace);
     }
     expect(seen.get('Pavane for a Dead Princess')).toBe(0.6);
-    expect(seen.get('Ode to Joy')).toBe(1);
+    expect(seen.get('Prelude in C (BWV 846)')).toBe(1);
     const slow = timing('easy', 0.6);
     expect(slow.bps).toBeLessThan(DIFFICULTY.easy.bps);
     expect(slow.visibleSeconds).toBeGreaterThan(DIFFICULTY.easy.visibleSeconds);
@@ -133,10 +133,10 @@ describe('sequence building', () => {
     }
     expect(played).toBeGreaterThan(0);
     expect(() => buildSequence({ key, clef: 'treble', difficulty: 'easy', tuneId: 'nope' }, mulberry32(1))).toThrow(/Unknown tune/);
-    // Ode to Joy fits treble in every major key, so forcing it must never throw.
+    // The Pavane fits treble in every major key, so forcing it must never throw.
     for (const t of TONICS.major) {
-      const seq = buildSequence({ key: { tonic: t, mode: 'major' }, clef: 'treble', difficulty: 'hard', tuneId: 'ode-to-joy' }, mulberry32(9));
-      expect(seq.titles[0]).toBe('Ode to Joy');
+      const seq = buildSequence({ key: { tonic: t, mode: 'major' }, clef: 'treble', difficulty: 'hard', tuneId: 'ravel-pavane' }, mulberry32(9));
+      expect(seq.titles[0]).toBe('Pavane for a Dead Princess');
     }
     console.log(`forced tunes: ${played} played, ${rejected} rejected (C major)`);
   });
@@ -251,6 +251,19 @@ describe('sequence building', () => {
       seen.add(buildSequence({ key, clef: 'treble', difficulty: 'easy' }, mulberry32(seed)).titles[0]);
     }
     expect(seen.has(raindrop.title)).toBe(true);
+  });
+
+  it('offers Schumann Melodie on easy, medium and hard', () => {
+    const melodie = TUNES.find((t) => t.id === 'schumann-melodie-68-1')!;
+    for (const level of levels) expect(tunePool(level, 'major').includes(melodie), level).toBe(true);
+    const key: Key = { tonic: TONICS.major[0], mode: 'major' };
+    for (const difficulty of levels) {
+      const seen = new Set<string>();
+      for (let seed = 0; seed < 150; seed++) {
+        seen.add(buildSequence({ key, clef: 'both', difficulty }, mulberry32(seed)).titles[0]);
+      }
+      expect(seen.has(melodie.title), difficulty).toBe(true);
+    }
   });
 
   it('includes Chopin at every difficulty', () => {

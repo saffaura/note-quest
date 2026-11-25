@@ -48,7 +48,8 @@ presses in a row, the correct key flashes on the piano; playing it clears the no
 Open the game with `?debug` on the end of the URL (for example
 `https://saffaura.github.io/note-quest/?debug`), or run `npm run dev`, and a small **Debug** button
 appears in the top-left of the main menu. It opens a list of every tune; pick one and every game
-plays that song until you choose "Random" again. The panel shows the song's difficulty, length,
+plays that song until you choose "Random" again or close the tab (the pick is not remembered on later
+visits). The panel shows the song's difficulty, length,
 source bars, and whether it fits the key and clef you've chosen. If it doesn't fit, Start is
 blocked with a message instead of falling back to another song. Normal players never see it.
 
