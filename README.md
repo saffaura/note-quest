@@ -54,7 +54,11 @@ are at the top of `src/game.ts`.
 - `src/melody.ts` – picks tunes, transposes them to the key and clef, adds doubles and beams
 - `src/game.ts` – scoring and timing
 - `src/renderer.ts` – canvas drawing of the staff
-- `src/piano.ts`, `src/audio.ts`, `src/main.ts` – input, sound and UI
+- `src/piano.ts`, `src/audio.ts`, `src/main.ts` – input, sound and UI. The piano sound is made from
+  real grand-piano recordings (`src/assets/piano/`, one every three semitones from C3 to C6): each key
+  plays the nearest recording, shifted by at most two semitones, through a light shared reverb.
+  Correct notes get a little more reverb and wrong ones are short and dry. The recordings load in the
+  background after the first tap; until then (or if they fail to load) a built-in synthesised piano plays.
 
 ## Testing songs (debug picker)
 
@@ -104,6 +108,10 @@ Medium and hard are slowed down in Both mode (to 0.8x and 0.7x) so two staves st
   from various places. The pieces are public domain, but an individual engraving or edition may carry
   its own licence (for example Mutopia Project editions are often CC BY-SA 4.0 and need attribution).
   If you own one of these files and want it removed or credited differently, please open an issue.
+- **Piano sound:** the notes in `src/assets/piano/` are from the
+  [Salamander Grand Piano V3](https://github.com/sfzinstruments/SalamanderGrandPiano) by Alexander Holm,
+  licensed under [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/). Only a selection of notes
+  is used, and they are cut short when loaded in the game.
 - **Fonts:** [Jost](https://github.com/indestructible-type/Jost) and
   [Noto Music](https://fonts.google.com/noto/specimen/Noto+Music), both under the SIL Open Font
   Licence, bundled through [Fontsource](https://fontsource.org).

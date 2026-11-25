@@ -462,9 +462,15 @@ function handleFx(fx: GameFx | null, pressedMidi?: number): void {
 
 piano.onPress = (midi) => {
   audio.unlock();
-  audio.note(midi);
-  if (!game || !running || paused || screenName !== 'game') return;
-  handleFx(game.press(midi), midi);
+  if (!game || !running || paused || screenName !== 'game') {
+    audio.note(midi);
+    return;
+  }
+  const fx = game.press(midi);
+  // Right answers ring longer in the reverb; wrong keys stay short and dry.
+  const style = fx?.type === 'exact' ? 'correct' : fx?.type === 'octave' ? 'near' : fx?.type === 'wrong' ? 'wrong' : 'plain';
+  audio.note(midi, style);
+  handleFx(fx, midi);
 };
 
 function frame(ts: number): void {
