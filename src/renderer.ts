@@ -104,8 +104,10 @@ export class Renderer {
 
     const staves = stavesFor(this.clef);
     const [pLo, pHi] = PIANO_RANGE[this.clef];
+    // Keep both staves large: notes up to C6 still fit in the top margin.
+    const layoutHi = this.clef === 'both' ? Math.min(pHi, 79) : pHi;
     const lo = Math.min(...staves.map((s) => s.bottomD), whiteMidiToD(pLo));
-    const hi = Math.max(...staves.map((s) => s.bottomD + 8), whiteMidiToD(pHi));
+    const hi = Math.max(...staves.map((s) => s.bottomD + 8), whiteMidiToD(layoutHi));
     const marginTop = 5;
     const marginBottom = 5;
     const steps = hi - lo + marginTop + marginBottom;
@@ -412,7 +414,13 @@ export class Renderer {
       }
     }
 
-    const stem = this.stemInfo(notes, x);
+    const cross =
+      this.clef === 'both' &&
+      notes.length === 2 &&
+      staffForNote(notes[0].d, this.clef) !== staffForNote(notes[1].d, this.clef);
+    // A pair split between the two staves (melody on top, bass below) gets one stem per note.
+    const stems = cross ? [this.stemInfo([notes[0]], x), this.stemInfo([notes[1]], x)] : [this.stemInfo(notes, x)];
+    const stem = stems[0];
 
     // Ledger lines, drawn once per line even for doubles.
     ctx.strokeStyle = STAFF_LINE;
@@ -435,10 +443,10 @@ export class Renderer {
     notes.forEach((n, i) => {
       let nx = x;
       const prev = notes[i - 1];
-      if (stem && notes.length === 2 && i === 1 && n.d - prev.d === 1) {
+      if (!cross && stem && notes.length === 2 && i === 1 && n.d - prev.d === 1) {
         if (stem.dir === 1) nx = x + hw * 1.95;
       }
-      if (stem && notes.length === 2 && i === 0 && notes[1].d - n.d === 1 && stem.dir === -1) nx = x - hw * 1.95;
+      if (!cross && stem && notes.length === 2 && i === 0 && notes[1].d - n.d === 1 && stem.dir === -1) nx = x - hw * 1.95;
       const color = this.statusColor(re.status[i]);
       const y = yOf(n.d);
       ctx.save();
@@ -475,7 +483,7 @@ export class Renderer {
       if (n.acc === keyAcc) return;
       nudge = Math.abs(n.d - lastAccD) <= 2 ? nudge + 1 : 0;
       lastAccD = n.d;
-      const extra = notes.length === 2 && stem?.dir === -1 && i === 0 && notes[1].d - n.d === 1 ? hw * 1.95 : 0;
+      const extra = !cross && notes.length === 2 && stem?.dir === -1 && i === 0 && notes[1].d - n.d === 1 ? hw * 1.95 : 0;
       this.drawAccidental(
         x - hw - space * (0.8 + nudge * 0.8) - extra,
         yOf(n.d),
@@ -485,12 +493,17 @@ export class Renderer {
     });
 
     if (re.ev.beamId === null) {
-      const color = this.statusColor(re.status[0]);
-      this.drawStem(stem, color);
-      if (re.ev.dur <= 0.5) this.drawFlag(stem, color);
+      stems.forEach((s, k) => {
+        const color = this.statusColor(re.status[cross ? k : 0]);
+        this.drawStem(s, color);
+        if (re.ev.dur <= 0.5) this.drawFlag(s, color);
+      });
     }
 
-    if (hints) this.drawHint(re, x, stem);
+    if (hints) {
+      if (cross) stems.forEach((s, k) => this.drawHint([notes[k]], x, s));
+      else this.drawHint(notes, x, stem);
+    }
     ctx.restore();
   }
 
@@ -581,10 +594,9 @@ export class Renderer {
     }
   }
 
-  private drawHint(re: RuntimeEvent, x: number, stem: StemInfo | null): void {
+  private drawHint(notes: Pitch[], x: number, stem: StemInfo | null): void {
     const { ctx } = this;
     const { yOf, space } = this.layout;
-    const notes = re.ev.notes;
     const label = notes.map((n) => pitchName(n)).join(' + ');
     const size = clamp(space * 0.72, 10, 17);
     ctx.font = `600 ${size}px ${UI_FONT}`;

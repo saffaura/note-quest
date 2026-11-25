@@ -68,6 +68,12 @@ octave up / down, `#` / `b` alter a note, and `:2` sets the length in beats. Tra
 from MIDI files or MusicXML scores have a `source` field saying where they came from and which bars
 were used.
 
+With the **Both** clef the melody is played on the treble staff and a simple left hand on the bass
+staff (one chord root per bar, generated from the melody by `src/harmony.ts`). Set `meter` (beats per
+bass note, default 4) and `pickup` (lead-in beats) on a tune to line the bass up with its bars, or
+write the bass by hand with a `bass` string that has one token per melody token (`-` = no bass note).
+Hard difficulty is slowed down in Both mode so two staves stay readable.
+
 ## Credits and licences
 
 - **Code:** written for this project. There is no licence file yet, so all rights are reserved until

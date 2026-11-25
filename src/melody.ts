@@ -7,7 +7,7 @@ import {
   PIANO_RANGE,
   scaleNote,
 } from './theory';
-import { type Tune, type TuneEvent, TUNES, parseTune } from './tunes';
+import { type Tune, type TuneEvent, TUNES, tuneEvents } from './tunes';
 
 export type Rng = () => number;
 
@@ -111,7 +111,7 @@ function inject(events: TuneEvent[], cfg: DifficultyConfig, rng: Rng): TuneEvent
   const out: TuneEvent[] = [];
   let cooldown = 2;
   events.forEach((ev, i) => {
-    const plain = ev.notes.length === 1 && ev.notes[0].alt === 0;
+    const plain = ev.notes.length === 1 && ev.notes[0].alt === 0 && !ev.bass;
     if (cooldown > 0 || !plain) {
       cooldown = Math.max(0, cooldown - 1);
       out.push(ev);
@@ -167,14 +167,43 @@ function bestOctave(
 }
 
 const CHUNK_SIZE = 6;
+const MAX_GAP_SECONDS = 2;
+/** Speed multiplier for hard difficulty with both clefs (about the same speed as medium). */
+export const BOTH_HARD_PACE = 0.7;
+/** With a bass line the melody stays above middle C and each bass note sits in this window. */
+const MELODY_FLOOR = 60;
+const BASS_WINDOW: [number, number] = [48, 59];
 
 interface PlacedEvent {
   dur: number;
   notes: Pitch[];
 }
 
+/** True when a tune has a bass line that the "both clefs" mode should play. */
+export const hasBass = (events: TuneEvent[]): boolean => events.some((e) => e.bass);
+
+/** Melody on the treble staff, supporting notes folded into the bass staff. */
+function placeWithBass(events: TuneEvent[], key: Key): PlacedEvent[] | null {
+  const octave = bestOctave(events, key, [MELODY_FLOOR, PIANO_RANGE.both[1]], 'treble');
+  if (octave === null) return null;
+  return events.map((ev) => {
+    const notes = ev.notes.map((n) => scaleNote(key, octave, n.n, n.alt));
+    if (ev.bass) {
+      for (let o = 0; o <= 8; o++) {
+        const p = scaleNote(key, o, ev.bass.n, ev.bass.alt);
+        if (p.midi >= BASS_WINDOW[0] && p.midi <= BASS_WINDOW[1]) {
+          notes.push(p);
+          break;
+        }
+      }
+    }
+    return { dur: ev.dur, notes: notes.sort((a, b) => a.midi - b.midi) };
+  });
+}
+
 /** Turn scale-relative events into real pitches, or null if they cannot fit on the keyboard. */
 export function placeEvents(events: TuneEvent[], key: Key, clef: ClefMode, rng: Rng): PlacedEvent[] | null {
+  if (clef === 'both' && hasBass(events)) return placeWithBass(events, key);
   const window = PIANO_RANGE[clef];
   const chunks: TuneEvent[][] = [];
   if (clef === 'both') {
@@ -206,6 +235,7 @@ export function assignBeams(events: GameEvent[]): void {
     const a = events[i];
     const b = events[i + 1];
     if (a.beamId !== null) continue;
+    if (a.notes.length > 1 || b.notes.length > 1) continue; // pairs with a bass note are not beamed
     if (a.dur === 0.5 && b.dur === 0.5 && Number.isInteger(a.beat) && b.beat === a.beat + 0.5) {
       const ds = [...a.notes, ...b.notes].map((n) => n.d);
       // Keep beams tidy: skip pairs that leap across the grand staff (e.g. at a clef switch).
@@ -230,7 +260,7 @@ export function beatsNeeded(difficulty: Difficulty, pace = 1): number {
 
 /** True when a tune can be placed on the keyboard in this key and clef (ignoring random extras). */
 export function tuneFits(tune: Tune, key: Key, clef: ClefMode): boolean {
-  return placeEvents(parseTune(tune.score), key, clef, mulberry32(1)) !== null;
+  return placeEvents(tuneEvents(tune), key, clef, mulberry32(1)) !== null;
 }
 
 /**
@@ -242,6 +272,9 @@ export function tuneFits(tune: Tune, key: Key, clef: ClefMode): boolean {
 export function buildSequence(settings: MelodySettings, rng: Rng, minBeats?: number): Sequence {
   const { key, clef, difficulty, tuneId } = settings;
   const cfg = DIFFICULTY[difficulty];
+  // With a bass line the pairs come from the bass notes, so no random doubles are added on top.
+  const variant = (src: TuneEvent[]) =>
+    inject(src, clef === 'both' && hasBass(src) ? { ...cfg, dyadChance: 0 } : cfg, rng);
 
   let title = '';
   let pace = 1;
@@ -250,10 +283,10 @@ export function buildSequence(settings: MelodySettings, rng: Rng, minBeats?: num
   if (tuneId) {
     const tune = TUNES.find((t) => t.id === tuneId);
     if (!tune) throw new Error(`Unknown tune "${tuneId}"`);
-    source = parseTune(tune.score);
+    source = tuneEvents(tune);
     // Random doubles can push a tune out of range, so retry; fall back to the plain melody.
     for (let attempt = 0; attempt < 30 && !first; attempt++) {
-      first = placeEvents(inject(source, cfg, rng), key, clef, rng);
+      first = placeEvents(variant(source), key, clef, rng);
     }
     first ??= placeEvents(source, key, clef, rng);
     if (!first) throw new Error(`"${tune.title}" does not fit this key on the ${clef} staff. Try another key or clef.`);
@@ -261,8 +294,8 @@ export function buildSequence(settings: MelodySettings, rng: Rng, minBeats?: num
     pace = tune.pace ?? 1;
   } else {
     for (const tune of shuffle(tunePool(difficulty, key.mode), rng)) {
-      source = parseTune(tune.score);
-      first = placeEvents(inject(source, cfg, rng), key, clef, rng);
+      source = tuneEvents(tune);
+      first = placeEvents(variant(source), key, clef, rng);
       if (first) {
         title = tune.title;
         pace = tune.pace ?? 1;
@@ -273,22 +306,27 @@ export function buildSequence(settings: MelodySettings, rng: Rng, minBeats?: num
     while (!first) {
       title = 'Surprise tune';
       source = generateTune(difficulty, rng);
-      first = placeEvents(inject(source, cfg, rng), key, clef, rng);
+      first = placeEvents(variant(source), key, clef, rng);
     }
   }
 
+  // Reading two staves at hard speed is too much for learners, so that combination is slower.
+  if (clef === 'both' && difficulty === 'hard') pace *= BOTH_HARD_PACE;
+
   const needed = minBeats ?? beatsNeeded(difficulty, pace);
+  // Long notes would leave the staff empty for seconds, so the next note never starts later than this.
+  const maxAdvance = Math.max(1, Math.floor(MAX_GAP_SECONDS * timing(difficulty, pace).bps * 2) / 2);
   const events: GameEvent[] = [];
   let beat = 0;
   let id = 0;
   let pass = 0;
   while (events.length === 0 || events[events.length - 1].beat < needed) {
-    const placed = (pass > 0 && placeEvents(inject(source, cfg, rng), key, clef, rng)) || first;
+    const placed = (pass > 0 && placeEvents(variant(source), key, clef, rng)) || first;
     for (const ev of placed) {
       events.push({ id: id++, beat, dur: ev.dur, notes: ev.notes, beamId: null, tuneTitle: title });
-      beat += ev.dur;
+      beat += Math.min(ev.dur, maxAdvance);
     }
-    beat = Math.ceil(beat) + 1; // short pause before a repeat, keeps beams on whole beats
+    beat = Math.ceil(beat); // repeats start on a whole beat (keeps beams aligned) with no extra pause
     pass++;
   }
   assignBeams(events);

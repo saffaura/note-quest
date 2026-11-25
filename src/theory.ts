@@ -170,7 +170,7 @@ export function ledgerLines(d: number, staff: StaffDef): number[] {
 export const PIANO_RANGE: Record<ClefMode, [number, number]> = {
   treble: [60, 84], // C4 - C6
   bass: [36, 60], // C2 - C4
-  both: [48, 76], // C3 - E5
+  both: [48, 84], // C3 - C6 (bass notes below middle C, melody above it)
 };
 
 export const isBlackKey = (midi: number) => [1, 3, 6, 8, 10].includes(mod(midi, 12));

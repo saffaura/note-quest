@@ -2,7 +2,7 @@ import type { GameEvent, Sequence } from './melody';
 
 export const GAME_SECONDS = 60;
 /** Fraction of the screen width the first note starts across, so the player is not left waiting. */
-export const LEAD_FRACTION = 0.45;
+export const LEAD_FRACTION = 0.8;
 export const POINTS_EXACT = 5;
 export const POINTS_OCTAVE = 1;
 export const POINTS_WRONG = -2;

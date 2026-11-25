@@ -1,3 +1,4 @@
+import { autoBass } from './harmony';
 import type { Difficulty, Mode } from './theory';
 
 export interface TuneNote {
@@ -8,6 +9,8 @@ export interface TuneNote {
 export interface TuneEvent {
   notes: TuneNote[];
   dur: number; // beats; 1 = quarter note
+  /** Supporting bass note played together with this melody note (clef "both" only). */
+  bass?: TuneNote;
 }
 
 export interface Tune {
@@ -18,6 +21,16 @@ export interface Tune {
   level: Difficulty;
   /** Simplified transcription, see parseTune for the notation. */
   score: string;
+  /**
+   * Optional hand-written left hand, one token per melody token in `score` (`-` = no bass note
+   * there). Played on the bass staff when the player picks both clefs; other clef choices
+   * ignore it. Tunes without it get a simple generated bass (see harmony.ts).
+   */
+  bass?: string;
+  /** Beats per bass note for the generated bass (a bar, usually). Default 4. */
+  meter?: number;
+  /** Beats of lead-in before the first full bar, so the generated bass starts on the downbeat. */
+  pickup?: number;
   /** True when the transcription is from memory and should be checked against a PD score. */
   draft?: boolean;
   /** Where a transcription came from, when it was derived from a published edition. */
@@ -33,8 +46,10 @@ export interface Tune {
  * Notation: whitespace-separated tokens, `|` is ignored.
  *   [#|b] degree(1-7) [' = octave up, "," = octave down] [:beats]
  * Degrees are relative to the tonic of the tune's own mode. Default length is one beat.
+ * A bass line uses the same degree notation without octave marks or lengths (bass notes are
+ * folded into the bass staff by the game), with `-` for "no bass note on this melody note".
  */
-export function parseTune(score: string): TuneEvent[] {
+export function parseTune(score: string, bass?: string): TuneEvent[] {
   const events: TuneEvent[] = [];
   for (const token of score.split(/[\s|]+/).filter(Boolean)) {
     const m = /^([#b]?)([1-7])([',]*)(?::(\d*\.?\d+))?$/.exec(token);
@@ -45,7 +60,25 @@ export function parseTune(score: string): TuneEvent[] {
     const dur = Math.min(2, m[4] ? parseFloat(m[4]) : 1);
     events.push({ notes: [{ n: Number(m[2]) - 1 + 7 * octave, alt }], dur });
   }
+  if (bass !== undefined) {
+    const tokens = bass.split(/[\s|]+/).filter(Boolean);
+    if (tokens.length !== events.length) {
+      throw new Error(`Bass line has ${tokens.length} tokens but the melody has ${events.length}`);
+    }
+    tokens.forEach((token, i) => {
+      if (token === '-') return;
+      const m = /^([#b]?)([1-7])$/.exec(token);
+      if (!m) throw new Error(`Bad bass token "${token}"`);
+      events[i].bass = { n: Number(m[2]) - 1, alt: m[1] === '#' ? 1 : m[1] === 'b' ? -1 : 0 };
+    });
+  }
   return events;
+}
+
+/** A tune's melody with its bass line: the hand-written one if there is one, else a generated one. */
+export function tuneEvents(tune: Tune): TuneEvent[] {
+  if (tune.bass !== undefined) return parseTune(tune.score, tune.bass);
+  return autoBass(parseTune(tune.score), tune.mode, tune.meter ?? 4, tune.pickup ?? 0);
 }
 
 export const TUNES: Tune[] = [
@@ -97,6 +130,8 @@ export const TUNES: Tune[] = [
   },
   {
     id: 'fur-elise',
+    meter: 3,
+    pickup: 1,
     title: 'Für Elise',
     composer: 'Beethoven',
     mode: 'minor',
@@ -131,6 +166,7 @@ export const TUNES: Tune[] = [
   },
   {
     id: 'chopin-prelude-7',
+    meter: 3,
     title: 'Prelude in A major (Op. 28 No. 7)',
     composer: 'Chopin',
     mode: 'major',
@@ -162,6 +198,7 @@ export const TUNES: Tune[] = [
   },
   {
     id: 'chopin-waltz-69-2',
+    meter: 3,
     title: 'Waltz in B minor (Op. 69 No. 2)',
     composer: 'Chopin',
     mode: 'minor',
@@ -176,6 +213,7 @@ export const TUNES: Tune[] = [
   // sequences by others (see each `source`); only the notes were used.
   {
     id: 'satie-gymnopedie-1',
+    meter: 3,
     title: 'Gymnopédie No. 1',
     composer: 'Satie',
     mode: 'major',
@@ -265,13 +303,20 @@ export const TUNES: Tune[] = [
     composer: 'Chopin',
     mode: 'minor',
     level: 'easy',
-    source: 'MusicXML score (chopin-nocturne-op55-1.mxl), bars 1-6, 9-14, 21-26',
-    score: `5:2 1' 7 6 5 5 5:2 1' 7 6 5 5 5:2 1' 7 6
-            1:2 5 5:2 1' 7 6 5 5 5:2 1' 7 6 5 5 5:2 1' 7 6
-            #7:2 1' 7 6 5 6 5 4 3 2 3 2 2 2 3 2 5 5 5:2 1' 7 6`,
+    source: 'MusicXML score (chopin-nocturne-op55-1.mxl), melody bars 1-2, 5-8 and 17-24; ornaments and the left-hand-register run in bars 17 and 19 kept, rhythm evened out',
+    score: `5 1' 7 6 | 5 b5 5 6 5:2 | 5 1' 7 6 | 5:2 4 5 6 | 3:2 3 2 1 | 1:2 5 5 |
+            4 #6, 7, 1 7, 3 4 | 5:2 5 5 | #6 #1 2 3 2 5 #6 | #7:2 1' 7 6 |
+            6 5 6 5 4 | 4 3 2 3 2 | 2 2 2 3 2 | 2 5 5 5 |
+            5 1' 7 6 | 5 b5 5 6 5:2`,
+    bass: `1 - 2 - | 3 - - - #7 | 1 - 2 - | 3 - - - | 5 - - - | 1 1 - |
+           - - - 7 - - - | 3 3 - | 2 - - 2 - - - | 5 - - - |
+           5 - 5 - - | 5 - 5 - - | 5 - 5 - - | 5 - - - |
+           1 - 2 - | 3 - - - #7`,
   },
   {
     id: 'chopin-nocturne-9-2',
+    meter: 3,
+    pickup: 0.5,
     title: 'Nocturne in E♭ major (Op. 9 No. 2)',
     composer: 'Chopin',
     mode: 'major',
@@ -306,6 +351,7 @@ export const TUNES: Tune[] = [
   },
   {
     id: 'chopin-berceuse-57',
+    meter: 6,
     title: 'Berceuse in D♭ major (Op. 57)',
     composer: 'Chopin',
     mode: 'major',
@@ -318,6 +364,7 @@ export const TUNES: Tune[] = [
   },
   {
     id: 'chopin-nocturne-27-2',
+    meter: 3,
     title: 'Nocturne in D♭ major (Op. 27 No. 2)',
     composer: 'Chopin',
     mode: 'major',
