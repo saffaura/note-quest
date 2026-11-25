@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BOTH_HARD_PACE, DIFFICULTY, buildSequence, mulberry32, timing, tuneFits, tunePool } from './melody';
+import { BOTH_HARD_PACE, DIFFICULTY, buildSequence, mulberry32, timing, tunePace, tuneFits, tunePool } from './melody';
 import { GAME_SECONDS, Game } from './game';
 import { PIANO_RANGE, TONICS, type ClefMode, type Difficulty, type Key } from './theory';
 import { TUNES, parseTune } from './tunes';
@@ -121,7 +121,7 @@ describe('sequence building', () => {
           try {
             const seq = buildSequence({ key, clef, difficulty, tuneId: tune.id }, mulberry32(3));
             expect(seq.titles).toEqual([tune.title]);
-            expect(seq.pace).toBeCloseTo((tune.pace ?? 1) * (clef === 'both' && difficulty === 'hard' ? BOTH_HARD_PACE : 1));
+            expect(seq.pace).toBeCloseTo(tunePace(tune, difficulty) * (clef === 'both' && difficulty === 'hard' ? BOTH_HARD_PACE : 1));
             played++;
           } catch (err) {
             expect((err as Error).message).toMatch(/does not fit/);
@@ -234,6 +234,23 @@ describe('sequence building', () => {
   it('rejects a bass line whose length does not match the melody', () => {
     expect(() => parseTune('1 2 3', '1 -')).toThrow(/Bass line/);
     expect(parseTune('1 2 3', '1 - #5')[2].bass).toEqual({ n: 4, alt: 1 });
+  });
+
+  it('offers Raindrop on easy at a slower pace, and at normal pace on medium', () => {
+    const raindrop = TUNES.find((t) => t.id === 'chopin-raindrop')!;
+    expect(raindrop.level).toBe('medium');
+    expect(tunePool('easy', 'major').includes(raindrop)).toBe(true);
+    expect(tunePool('medium', 'major').includes(raindrop)).toBe(true);
+    const key: Key = { tonic: TONICS.major[7], mode: 'major' };
+    const easy = buildSequence({ key, clef: 'treble', difficulty: 'easy', tuneId: raindrop.id }, mulberry32(4));
+    const medium = buildSequence({ key, clef: 'treble', difficulty: 'medium', tuneId: raindrop.id }, mulberry32(4));
+    expect(easy.pace).toBeCloseTo(0.8);
+    expect(medium.pace).toBe(1);
+    const seen = new Set<string>();
+    for (let seed = 0; seed < 120; seed++) {
+      seen.add(buildSequence({ key, clef: 'treble', difficulty: 'easy' }, mulberry32(seed)).titles[0]);
+    }
+    expect(seen.has(raindrop.title)).toBe(true);
   });
 
   it('includes Chopin at every difficulty', () => {

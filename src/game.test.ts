@@ -44,7 +44,7 @@ describe('Game scoring', () => {
     expect(g.press(61)?.type).toBe('wrong');
     expect(g.press(62)?.type).toBe('wrong');
     expect(g.current()?.ev.id).toBe(0);
-    expect(g.press(60)?.type).toBe('exact');
+    expect(g.press(60)?.type).toBe('assisted'); // the answer was shown after the second miss
     expect(g.wrongPresses).toBe(2);
   });
 
@@ -97,7 +97,7 @@ describe('Game scoring', () => {
 describe('Streak bonus', () => {
   const N = STREAK_BONUS_AT;
   const run = (count: number) => make(Array.from({ length: count }, (_, i) => ev(i, 0, 60)));
-  const bonusOf = (fx: ReturnType<Game['press']>) => (fx && fx.type !== 'wrong' && fx.type !== 'miss' ? fx.bonus : -1);
+  const bonusOf = (fx: ReturnType<Game['press']>) => (fx && (fx.type === 'exact' || fx.type === 'octave') ? fx.bonus : -1);
 
   it('is 10 correct notes in a row', () => {
     expect(N).toBe(10);
@@ -143,6 +143,47 @@ describe('Streak bonus', () => {
 });
 
 describe('Wrong-note hints', () => {
+  it('earns no points for the note that was shown after two wrong presses', () => {
+    const g = make([ev(0, 0, 60), ev(1, 1, 62)]);
+    g.press(61);
+    g.press(63);
+    expect(g.score).toBe(0);
+    const fx = g.press(60);
+    expect(fx?.type).toBe('assisted');
+    expect(g.score).toBe(0);
+    expect(g.streak).toBe(0);
+    expect(g.assistedHits).toBe(0 + 1);
+    expect(g.exactHits).toBe(0);
+    expect(g.current()?.ev.id).toBe(1); // the note is cleared and the game moves on
+    // The next note scores normally again.
+    expect(g.press(62)?.type).toBe('exact');
+    expect(g.score).toBe(5);
+  });
+
+  it('also gives no points for the right note in another octave after a hint', () => {
+    const g = make([ev(0, 0, 60)]);
+    g.press(61);
+    g.press(63);
+    expect(g.press(72)?.type).toBe('assisted');
+    expect(g.score).toBe(0);
+  });
+
+  it('keeps every note of a pair unscored once the pair was hinted', () => {
+    const g = make([ev(0, 0, 60, 64)]);
+    g.press(61);
+    g.press(62);
+    expect(g.press(60)?.type).toBe('assisted');
+    expect(g.press(64)?.type).toBe('assisted');
+    expect(g.score).toBe(0);
+  });
+
+  it('still scores normally after a single wrong press', () => {
+    const g = make([ev(0, 0, 60)]);
+    g.press(61);
+    expect(g.press(60)?.type).toBe('exact');
+    expect(g.score).toBe(5);
+  });
+
   it('shows the correct key from the second wrong press in a row', () => {
     const g = make([ev(0, 0, 60, 64)]);
     const first = g.press(61);

@@ -152,6 +152,11 @@ export class Renderer {
       this.pop(this.layout.hitX + space, y - space, 'miss', '#8f8497', space * 0.8);
       return;
     }
+    if (fx.type === 'assisted') {
+      // The answer was shown, so the note clears without points.
+      this.pop(x, y - space * 1.8, '+0', '#8f8497', space * 0.9);
+      return;
+    }
     const color = fx.type === 'exact' ? SAGE : VIOLET;
     const total = fx.points + fx.bonus;
     this.pop(x, y - space * 1.8, fx.type === 'exact' ? `+${total}` : `+${total} · right note`, color, space);
@@ -408,6 +413,8 @@ export class Renderer {
         return VIOLET;
       case 'missed':
         return 'rgba(125, 114, 133, 0.6)';
+      case 'assisted':
+        return '#6f8fb3';
       default:
         return INK;
     }

@@ -40,6 +40,11 @@ export interface Tune {
    * note spacing in time and how quickly notes cross the screen (0.6 = 40% slower).
    */
   pace?: number;
+  /**
+   * Also offer this tune on easy (besides its own level), played at this extra speed multiplier
+   * (below 1 = slower), for tunes that are fine for easy readers when they are slowed down.
+   */
+  easyPace?: number;
 }
 
 /**
@@ -191,10 +196,18 @@ export const TUNES: Tune[] = [
     composer: 'Chopin',
     mode: 'major',
     level: 'medium',
-    source: 'Mutopia Project, Chopin Op. 28 No. 15 (public domain), bars 1-19',
-    score: `3' 5:2 6 7:2 1' 2' 4':2 3' 3' 4:.5 2':.5 1' 2' 3' 5:2 6 7:2 1' 2' 4':2 3' 3' 2:.5 2':.5 1' 7:.5 1':.5 2' 2':2
-            3' 4':.5 3':.5 2':.5 1':.5 3':2 2':.5 b7:.5 6:.5 5:.5 6 6 5 2' 1' b3' 2' 2':2 3' 4':.5 3':.5 2':.5 1':.5 3':2
-            1':.5 7:.5 6:.5 7 7:.5 1':.5 6 3' 2' 4' 3':.5 1':.5 7:.5 6:.5 7 7 6 2' 3' 2' 3':2 2'`,
+    easyPace: 0.8,
+    source: 'MusicXML score (chopin-raindrop-prelude.mxl), the main theme, bars 1-19: top line of the right hand with the chords reduced to their top note and the small run in bar 4 thinned to three notes; every note one beat, bass as written',
+    score: `3' 1' 5 6 | 7 1' | 2' 3' 4' 3' | 3' 2' 1' 2' 3' 4' |
+            3' 1' 5 6 | 7 1' | 2' 3' 4' 3' | 3' 2' 1' 7 1' |
+            2' 2' 3' | 4' 3' 2' 1' 3' | 2' b7 6 5 6 6 b7 | 5 2' 1' b3' |
+            2' 2' 3' | 4' 3' 2' 1' 3' | 3' 1' 7 6 7 7 1' | 6 3' 2' 4' |
+            3' 1' 7 6 7 7 1' | 6 2' 3' 2' | 3' 2'`,
+    bass: `1 - - - | 5 - | 1 - - - | 5 - - - - - |
+           1 - - - | 5 - | 1 - - - | 5 - - - - |
+           5 - - | 4 - - - - | 2 - - - - - - | 5 - - - |
+           5 - - | 2 - - - - | 3 - - - - - - | 6 - - - |
+           3 - - - - - - | 6 - - - | 5 -`,
   },
   {
     id: 'chopin-waltz-69-2',
@@ -213,15 +226,19 @@ export const TUNES: Tune[] = [
   // sequences by others (see each `source`); only the notes were used.
   {
     id: 'satie-gymnopedie-1',
-    meter: 3,
     title: 'Gymnopédie No. 1',
     composer: 'Satie',
     mode: 'major',
     level: 'easy',
-    source: 'Mutopia Project, Satie Gymnopédie No. 1 (public domain), bars 5-8, 13-18 and 22-36',
-    score: `3' 5' 4' 3' 7 6 7 1' 5:2
-            3' 5' 4' 3' 7 6 7 1' 5:2 7:2 3':2
-            5 6 b7 2' 1' 6 1' b7 6 1':2 1' 2' b3' 4' 5' b7 1' 2' 1' 6 1':2 1' 4':2 3':2 6 5 6 7 1' 2' 7 1' 2'`,
+    source: 'MusicXML score (satie-gymnopedie1.mxl), melody from bar 5 to bar 37 (the three-bar intro is skipped), every note one beat, bass as written',
+    score: `3' 5' | 4' 3' 7 | 6 7 1' | 5 | 3 | 3 | 3 | 3 |
+            3' 5' | 4' 3' 7 | 6 7 1' | 5 | 7 | 3' | 2 | 2 | 2 |
+            5 6 b7 | 2' 1' 6 | 1' b7 6 | 1' | 1' 1' | 2' b3' 4' | 5' b7 1' | 2' 1' 6 | 1' | 1' 1' |
+            4' | 3' | 6 5 6 | 7 1' 2' | 7 1' 2' | 3`,
+    bass: `4 - | 1 - - | 4 - - | 1 | 4 | 1 | 4 | 1 |
+           4 - | 1 - - | 4 - - | 1 | 3 | 6 | 2 | 2 | 1 |
+           5 - - | 1 - - | 1 - - | 1 | 1 - | 1 - - | 1 - - | 1 - - | 1 | 1 - |
+           2 | 3 | 6 - - | 2 - - | 2 - - | 2`,
   },
   {
     id: 'chopin-nocturne-32-1',

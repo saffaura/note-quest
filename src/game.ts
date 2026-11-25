@@ -12,7 +12,7 @@ export const POINTS_STREAK_BONUS = 3;
 /** Wrong presses in a row after which the correct key is shown. */
 export const WRONG_BEFORE_HINT = 2;
 
-export type NoteStatus = 'pending' | 'exact' | 'octave' | 'missed';
+export type NoteStatus = 'pending' | 'exact' | 'octave' | 'assisted' | 'missed';
 
 export interface RuntimeEvent {
   ev: GameEvent;
@@ -23,6 +23,7 @@ export interface RuntimeEvent {
 
 export type GameFx =
   | { type: 'exact' | 'octave'; event: RuntimeEvent; noteIndex: number; points: number; bonus: number; streak: number }
+  | { type: 'assisted'; event: RuntimeEvent; noteIndex: number; points: 0 }
   | { type: 'miss'; event: RuntimeEvent; noteIndex: number; points: 0 }
   | { type: 'wrong'; event: RuntimeEvent; midi: number; points: number; hint: number[] };
 
@@ -43,7 +44,9 @@ export class Game {
   misses = 0;
   wrongPresses = 0;
   bonusPoints = 0;
+  assistedHits = 0;
   private wrongInRow = 0;
+  private helped = new Set<RuntimeEvent>();
   private expireIndex = 0;
 
   constructor(
@@ -105,12 +108,14 @@ export class Game {
 
     let noteIndex = pitches.findIndex((p, i) => event.status[i] === 'pending' && p.midi === midi);
     if (noteIndex >= 0) {
+      if (this.helped.has(event)) return this.assist(event, noteIndex);
       event.status[noteIndex] = 'exact';
       this.exactHits++;
       return this.hit({ type: 'exact', event, noteIndex, points: POINTS_EXACT });
     }
     noteIndex = pitches.findIndex((p, i) => event.status[i] === 'pending' && (p.midi - midi) % 12 === 0);
     if (noteIndex >= 0) {
+      if (this.helped.has(event)) return this.assist(event, noteIndex);
       event.status[noteIndex] = 'octave';
       this.octaveHits++;
       return this.hit({ type: 'octave', event, noteIndex, points: POINTS_OCTAVE });
@@ -119,8 +124,20 @@ export class Game {
     this.wrongInRow++;
     this.streak = 0;
     this.addScore(POINTS_WRONG);
-    const hint = this.wrongInRow >= WRONG_BEFORE_HINT ? pitches.filter((_, i) => event.status[i] === 'pending').map((p) => p.midi) : [];
+    let hint: number[] = [];
+    if (this.wrongInRow >= WRONG_BEFORE_HINT) {
+      hint = pitches.filter((_, i) => event.status[i] === 'pending').map((p) => p.midi);
+      this.helped.add(event); // notes of this event no longer score once the answer was shown
+    }
     return { type: 'wrong', event, midi, points: POINTS_WRONG, hint };
+  }
+
+  /** A note played after the game showed the answer: it clears the note but earns nothing. */
+  private assist(event: RuntimeEvent, noteIndex: number): GameFx {
+    event.status[noteIndex] = 'assisted';
+    this.assistedHits++;
+    this.wrongInRow = 0;
+    return { type: 'assisted', event, noteIndex, points: 0 };
   }
 
   /** Score a correct note; once a streak is running every further correct note earns a bonus. */

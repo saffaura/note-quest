@@ -83,11 +83,17 @@ const hasAlterations = (t: Tune) => /[#b]\d/.test(t.score);
 export function tunePool(level: Difficulty, mode: 'major' | 'minor', library: Tune[] = TUNES): Tune[] {
   const usable = library.filter((t) => t.mode === mode || !hasAlterations(t));
   const idx = LEVELS.indexOf(level);
-  let pool = usable.filter((t) => t.level === level);
+  let pool = usable.filter((t) => t.level === level || (level === 'easy' && t.easyPace !== undefined));
   for (let i = idx - 1; i >= 0 && pool.length < 4; i--) {
     pool = pool.concat(usable.filter((t) => t.level === LEVELS[i]));
   }
   return pool;
+}
+
+/** Speed multiplier for a tune at a difficulty: its own pace, slowed further when offered on easy via `easyPace`. */
+export function tunePace(tune: Tune, difficulty: Difficulty): number {
+  const base = tune.pace ?? 1;
+  return difficulty === 'easy' && tune.level !== 'easy' && tune.easyPace !== undefined ? base * tune.easyPace : base;
 }
 
 /** A short random-walk melody, used when no library tune fits the chosen key and clef. */
@@ -291,14 +297,14 @@ export function buildSequence(settings: MelodySettings, rng: Rng, minBeats?: num
     first ??= placeEvents(source, key, clef, rng);
     if (!first) throw new Error(`"${tune.title}" does not fit this key on the ${clef} staff. Try another key or clef.`);
     title = tune.title;
-    pace = tune.pace ?? 1;
+    pace = tunePace(tune, difficulty);
   } else {
     for (const tune of shuffle(tunePool(difficulty, key.mode), rng)) {
       source = tuneEvents(tune);
       first = placeEvents(variant(source), key, clef, rng);
       if (first) {
         title = tune.title;
-        pace = tune.pace ?? 1;
+        pace = tunePace(tune, difficulty);
         break;
       }
     }

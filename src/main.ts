@@ -297,6 +297,7 @@ function refreshDebug(): void {
   const fits = tuneFits(tune, currentKey(), settings.clef);
   const facts = [`${tune.level}`, `written in ${tune.mode}`, `${beats} beats`];
   if (tune.pace) facts.push(`pace ${tune.pace}`);
+  if (tune.easyPace) facts.push(`also easy (pace ${tune.easyPace})`);
   if (tune.draft) facts.push('draft');
   const where = `${keyLabel(currentKey())}, ${settings.clef}`;
   info.textContent =
@@ -436,6 +437,8 @@ function handleFx(fx: GameFx | null, pressedMidi?: number): void {
   else if (fx.type === 'octave') {
     piano.flash(pressedMidi, 'okay');
     piano.flash(fx.event.ev.notes[fx.noteIndex].midi, 'okay');
+  } else if (fx.type === 'assisted') {
+    piano.flash(pressedMidi, 'okay');
   } else if (fx.type === 'wrong') {
     piano.flash(pressedMidi, 'bad');
     for (const midi of fx.hint) piano.flash(midi, 'hint');
